@@ -514,7 +514,7 @@ begin
  --checking pg_stat_statemets
   select * into reg from pg_available_extensions where name ='pg_stat_statements' and installed_version is not null and  position ('pg_stat_statements' in current_setting('shared_preload_libraries') ) >0;
    if found then 
-       with sub as (select d.datname,queryid, query, calls, total_time,min_time,max_time,mean_time,stddev_time,rows from pg_stat_statements  s  join   pg_database d on  (d.oid=s.dbid) ),
+       with sub as (select d.datname,queryid, query, calls, total_time,min_time,max_time,mean_time,stddev_time,rows from public.pg_stat_statements  s  join   pg_database d on  (d.oid=s.dbid) ),
   
 	  cal as (INSERT INTO _stat_record._query_stat select id,datname,queryid,query,'calls',calls from sub),
 	  total as (INSERT INTO _stat_record._query_stat select id,datname,queryid,query,'total_time',total_time from sub),

@@ -15,7 +15,7 @@ Run: make install
 --if not install,  you must make sure you can see the binary pg_config,
 maybe setting postgresql binary path in the SO  or setting PG_CONFIG = /path_to_pg_config/  in the makefile 
 
-In postgresql execute: CREATE EXTENSION stats_record CASCADE;
+In postgresql execute: CREATE EXTENSION stat_record CASCADE;
 
 --It create schema stat_record and tables/functions
 

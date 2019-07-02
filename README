@@ -1,7 +1,8 @@
 stat_record  extension
 ======================================
 
-This PostgreSQL extension implements  record stats about database server and can show some reports about stats like : connection, size, cache, table and index use, querys, etc  
+This PostgreSQL extension implements to register some statistics on the database server at any time and can display several reports on statistics such as: connection, size, cache, use of table and index, queries, etc.
+and you can compare some statistics over time to see the changes.
 #required PG10+, file_fdw, pg_stat_statements extensions and linux SO
 
 
@@ -34,10 +35,10 @@ select _stat_record.truncate_record( boolean) ---- truncate all record taked (bo
 select _stat_record.delete_record(bigint) ---- delete a record with id_record parameter
 select * from _stat_record.lastest_records(bigint) ---- get the lastes record (if a number (N) is specified, it shows the last N records)
 select * from _stat_record.global_report_record(bigint,bigint) ----get report with global stats about id_record specified
-select * from _stat_record.total_report_record(bigint,bigint) ----get report with all stats about id_records specified
-select * from _stat_record.total_report_for_2last_record() ----get report with all stats about two last record taked
-select * from _stat_record.total_report_for_amonth_record(date) ----get report with all stats about first and the last record taked a moth specified
-select _stat_record.export_total_report_record(bigint,bigint,text) ----export CSV report with all stats about first and the last record taked a moth specified y some path(by default /tmp/global_report.csv)
+select * from _stat_record.total_report_record(bigint,bigint) ----get report with all global and database and  querys stats about id_records specified
+select * from _stat_record.total_report_for_2last_record() -----get report with all global and database and  querys stats about two last record taked
+select * from _stat_record.total_report_for_amonth_record(date) -----get report with all global and database and  querys stats about first and the last record taked a moth specified
+select _stat_record.export_total_report_record(bigint,bigint,text) ----export CSV report with all global and database and  querys stats about first and the last record taked a moth specified y some path(by default /tmp/global_report.csv)
 
 
 
@@ -70,12 +71,12 @@ NOTICE:  record taked
 
 
 --getting the last tree records
-stat_record=# select * from _stat_record.lastest_records(3);
+dell_testing=# select * from _stat_record.lastest_records(3);
  id |        record_time         | record_description 
 ----+----------------------------+--------------------
-  3 | 2019-03-26 09:31:28.356064 | 
-  2 | 2019-03-26 09:26:54.164399 | 
-  1 | 2019-03-26 09:25:40.781224 | 
+  3 | 2019-07-02 15:32:43.160909 | 
+  2 | 2019-07-02 15:31:41.829337 | 
+  1 | 2019-07-02 15:29:30.187795 | 
 (3 filas)
 
 
@@ -86,67 +87,66 @@ stat_record=# select * from _stat_record.lastest_records(3);
 
 --get global report about 1 and 2 records
 stat_record=# select * from _stat_record.global_report_record(1,2);
-                                                                     global_report_record                                                                      
----------------------------------------------------------------------------------------------------------------------------------------------------------------
- Global report from database server, generate by stat_record extension 
- Record id 1, taked: 2019-03-26 09:25:40.781224 :->
-   Server reload: 2019-03-20 12:39:56.68537-03
-   Server start: 2019-03-20 12:39:57.391369-03
-   Version server: PostgreSQL 10.7 (Ubuntu 10.7-1.pgdg16.04+1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 5.4.0-6ubuntu1~16.04.11) 5.4.0 20160609, 64-bit
+Global report from database server, generate by stat_record extension 
+ Record id 1, taked: 2019-07-02 15:29:30.187795 :->
+   Version server: PostgreSQL 10.9 (Ubuntu 10.9-1.pgdg16.04+1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 5.4.0-6ubuntu1~16.04.11) 5.4.0 20160609, 64-bit
+   Server start: 2019-07-01 09:14:33.591829-04
+   Server reload: 2019-07-01 09:14:32.702734-04
    Users:14
-   Databases: 38
+   Databases: 28
    Tablespaces: 2
    Tablespaces Names/size: 
-     pg_default: 31541.00 MB
+     pg_default: 11199.00 MB
      pg_global: 0.00 MB
    Partitions Disc:->
      S.ficheros  Tamaño  Usados  Disp    Uso%    Montado
      udev        7.8G    0       7.8G    0%      /dev
-     tmpfs       1.6G    26M     1.6G    2%      /run
-     /dev/sda2   202G    75G     117G    39%     /
-     tmpfs       7.8G    138M    7.7G    2%      /dev/shm
+     tmpfs       1.6G    11M     1.6G    1%      /run
+     /dev/sda2   202G    69G     123G    36%     /
+     tmpfs       7.8G    163M    7.7G    3%      /dev/shm
      tmpfs       5.0M    4.0K    5.0M    1%      /run/lock
      tmpfs       7.8G    0       7.8G    0%      /sys/fs/cgroup
      /dev/sda1   380M    1.2M    379M    1%      /boot/efi
-     /dev/sda3   230G    143G    76G     66%     /home
-     tmpfs       1.6G    100K    1.6G    1%      /run/user/1000
- Record id 2, taked: 2019-03-26 09:26:54.164399 :->
-   Server reload: 2019-03-20 12:39:56.68537-03
-   Server start: 2019-03-20 12:39:57.391369-03
-   Version server: PostgreSQL 10.7 (Ubuntu 10.7-1.pgdg16.04+1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 5.4.0-6ubuntu1~16.04.11) 5.4.0 20160609, 64-bit
+     /dev/sda3   230G    188G    31G     87%     /home
+     tmpfs       1.6G    84K     1.6G    1%      /run/user/1000
+ Record id 2, taked: 2019-07-02 15:31:41.829337 :->
+   Version server: PostgreSQL 10.9 (Ubuntu 10.9-1.pgdg16.04+1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 5.4.0-6ubuntu1~16.04.11) 5.4.0 20160609, 64-bit
+   Server start: 2019-07-01 09:14:33.591829-04
+   Server reload: 2019-07-01 09:14:32.702734-04
    Users: 14
-   Databases: 38
+   Databases: 28
    Tablespaces: 2
    Tablespaces Names/size: 
-     pg_default: 31542.00 MB
+     pg_default: 11209.00 MB
      pg_global: 0.00 MB
    Partitions Disc:->
      S.ficheros  Tamaño  Usados  Disp    Uso%    Montado
      udev        7.8G    0       7.8G    0%      /dev
-     tmpfs       1.6G    26M     1.6G    2%      /run
-     /dev/sda2   202G    75G     117G    39%     /
-     tmpfs       7.8G    138M    7.7G    2%      /dev/shm
+     tmpfs       1.6G    11M     1.6G    1%      /run
+     /dev/sda2   202G    69G     123G    36%     /
+     tmpfs       7.8G    163M    7.7G    3%      /dev/shm
      tmpfs       5.0M    4.0K    5.0M    1%      /run/lock
      tmpfs       7.8G    0       7.8G    0%      /sys/fs/cgroup
      /dev/sda1   380M    1.2M    379M    1%      /boot/efi
-     /dev/sda3   230G    143G    76G     66%     /home
-     tmpfs       1.6G    100K    1.6G    1%      /run/user/1000
+     /dev/sda3   230G    188G    31G     87%     /home
+     tmpfs       1.6G    84K     1.6G    1%      /run/user/1000
  Configuration Differences:->
  Databases Differences:->
-     Databases commit: 113 
-     Databases rollback: 0 
-     Databases tuples returned: 196165 
-     Databases tuples fetched: 5864 
-     Databases tuples inserted: 3414 
-     Databases tuples updated: 21 
-     Databases tuples deleted: 8 
-     Databases tuples tempfiles: 0 
-     Databases active connections: 0 
-     Databases connections: 0 
-     Databases chache ratio: 0.00 %
-     Databases sizes: 1.39 MB
      Databases count: 0 
+     Databases sizes: 9.76 MB
+     Databases chache ratio: 0.06 %
+     Databases connections: -1 
+     Databases active connections: 0 
+     Databases tuples tempfiles: 0 
+     Databases tuples deleted: 0 
+     Databases tuples updated: 1 
+     Databases tuples inserted: 34143 
+     Databases tuples fetched: 19409 
+     Databases tuples returned: 956439 
+     Databases rollback: 0 
+     Databases commit: 445 
 (58 filas)
+
 
 --get the total reports about 1 and 3 records and some different
 stat_record=#select * from _stat_record.total_report_record(1,3);
@@ -170,12 +170,13 @@ NOTICE:  record deleted
  t
 (1 fila)
 
-stat_record=# select * from _stat_record.lastest_records(3);
+dell_testing=# select * from _stat_record.lastest_records(3);
  id |        record_time         | record_description 
 ----+----------------------------+--------------------
-  3 | 2019-03-26 09:31:28.356064 | 
-  2 | 2019-03-26 09:26:54.164399 | 
+  3 | 2019-07-02 15:32:43.160909 | 
+  2 | 2019-07-02 15:31:41.829337 | 
 (2 filas)
+
 
 
 

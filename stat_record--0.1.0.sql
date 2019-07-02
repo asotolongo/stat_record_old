@@ -1,11 +1,4 @@
---
--- PostgreSQL database dump
---
 
--- Dumped from database version 10.7 (Ubuntu 10.7-1.pgdg16.04+1)
--- Dumped by pg_dump version 11.2 (Ubuntu 11.2-1.pgdg16.04+1)
-
--- Started on 2019-03-21 15:53:40 -03
 CREATE SERVER fs
    FOREIGN DATA WRAPPER file_fdw;
 
@@ -19,18 +12,11 @@ SET check_function_bodies = false;
 SET client_min_messages = warning;
 SET row_security = off;
 
---
--- TOC entry 6 (class 2615 OID 263539)
--- Name: _stat_record; Type: SCHEMA; Schema: -; Owner: -
---
+
 
 CREATE SCHEMA _stat_record;
 
 
---
--- TOC entry 661 (class 1247 OID 263705)
--- Name: detail_record; Type: TYPE; Schema: _stat_record; Owner: -
---
 
 CREATE TYPE _stat_record.detail_record AS (
 	variable text,
@@ -38,10 +24,7 @@ CREATE TYPE _stat_record.detail_record AS (
 );
 
 
---
--- TOC entry 701 (class 1247 OID 264922)
--- Name: global_report_record; Type: TYPE; Schema: _stat_record; Owner: -
---
+
 
 CREATE TYPE _stat_record.global_report_record AS (
 	col1 text,
@@ -49,10 +32,7 @@ CREATE TYPE _stat_record.global_report_record AS (
 );
 
 
---
--- TOC entry 247 (class 1255 OID 264241)
--- Name: delete_record(bigint); Type: FUNCTION; Schema: _stat_record; Owner: -
---
+
 
 CREATE FUNCTION _stat_record.delete_record(id bigint) RETURNS boolean
     LANGUAGE plpgsql
@@ -68,15 +48,11 @@ begin
  EXCEPTION
     WHEN OTHERS THEN
       GET STACKED DIAGNOSTICS mensaje = message_text, mensaje_detalle =pg_exception_detail, sqlerror = returned_sqlstate;
-      RAISE EXCEPTION 'Otro error: %, %, %', sqlerror, mensaje,mensaje_detalle;
+      RAISE EXCEPTION 'Other error: %, %, %', sqlerror, mensaje,mensaje_detalle;
       return false ;
 end;$_$;
 
 
---
--- TOC entry 252 (class 1255 OID 264270)
--- Name: detail_record(bigint); Type: FUNCTION; Schema: _stat_record; Owner: -
---
 
 CREATE FUNCTION _stat_record.detail_record(id bigint) RETURNS SETOF text
     LANGUAGE plpgsql
@@ -255,7 +231,7 @@ begin
   EXCEPTION
     WHEN OTHERS THEN
       GET STACKED DIAGNOSTICS mensaje = message_text, mensaje_detalle =pg_exception_detail, sqlerror = returned_sqlstate;
-      RAISE EXCEPTION 'Otro error: %, %, %', sqlerror, mensaje,mensaje_detalle;
+      RAISE EXCEPTION 'Other error: %, %, %', sqlerror, mensaje,mensaje_detalle;
       return  ;
 
  return  ; 
@@ -264,10 +240,7 @@ end;
 $_$;
 
 
---
--- TOC entry 255 (class 1255 OID 264925)
--- Name: export_total_report_record(bigint, bigint, text); Type: FUNCTION; Schema: _stat_record; Owner: -
---
+
 
 CREATE FUNCTION _stat_record.export_total_report_record(pid_record_ini bigint, pid_record_last bigint, p_file text DEFAULT '/tmp/global_report.csv'::text) RETURNS text
     LANGUAGE plpgsql
@@ -286,7 +259,7 @@ begin
    EXCEPTION
     WHEN OTHERS THEN
       GET STACKED DIAGNOSTICS mensaje = message_text, mensaje_detalle =pg_exception_detail, sqlerror = returned_sqlstate;
-      RAISE EXCEPTION 'Otro error: %, %, %', sqlerror, mensaje,mensaje_detalle;
+      RAISE EXCEPTION 'Other error: %, %, %', sqlerror, mensaje,mensaje_detalle;
       
   raise notice 'record global report';
  return 'Error' ; 
@@ -297,10 +270,7 @@ end;
 $_$;
 
 
---
--- TOC entry 254 (class 1255 OID 264269)
--- Name: global_report_record(bigint, bigint); Type: FUNCTION; Schema: _stat_record; Owner: -
---
+
 
 CREATE FUNCTION _stat_record.global_report_record(pid_record_ini bigint, pid_record_last bigint) RETURNS SETOF text
     LANGUAGE plpgsql
@@ -376,7 +346,7 @@ begin
    EXCEPTION
     WHEN OTHERS THEN
       GET STACKED DIAGNOSTICS mensaje = message_text, mensaje_detalle =pg_exception_detail, sqlerror = returned_sqlstate;
-      RAISE EXCEPTION 'Otro error: %, %, %', sqlerror, mensaje,mensaje_detalle;
+      RAISE EXCEPTION 'Other error: %, %, %', sqlerror, mensaje,mensaje_detalle;
       return  ;
   raise notice 'record global report';
  return  ; 
@@ -387,10 +357,6 @@ end;
 $_$;
 
 
---
--- TOC entry 234 (class 1255 OID 264455)
--- Name: lastest_records(bigint); Type: FUNCTION; Schema: _stat_record; Owner: -
---
 
 CREATE FUNCTION _stat_record.lastest_records(p_count bigint DEFAULT 1) RETURNS TABLE(id bigint, record_time timestamp without time zone, record_description text)
     LANGUAGE sql
@@ -400,10 +366,6 @@ select * from _stat_record._record_number  order by 1 desc  limit $1 ;
 $_$;
 
 
---
--- TOC entry 251 (class 1255 OID 263630)
--- Name: take_record(text); Type: FUNCTION; Schema: _stat_record; Owner: -
---
 
 CREATE FUNCTION _stat_record.take_record(p_des text DEFAULT ''::text) RETURNS boolean
     LANGUAGE plpgsql
@@ -624,17 +586,14 @@ end;
  EXCEPTION
     WHEN OTHERS THEN
       GET STACKED DIAGNOSTICS mensaje = message_text, mensaje_detalle =pg_exception_detail, sqlerror = returned_sqlstate;
-      RAISE EXCEPTION 'Otro error: %, %, %', sqlerror, mensaje,mensaje_detalle;
+      RAISE EXCEPTION 'Other error: %, %, %', sqlerror, mensaje,mensaje_detalle;
       return false ;
     
 end;
 $_$;
 
 
---
--- TOC entry 256 (class 1255 OID 264926)
--- Name: total_report_for_2last_record(); Type: FUNCTION; Schema: _stat_record; Owner: -
---
+
 
 CREATE FUNCTION _stat_record.total_report_for_2last_record() RETURNS SETOF _stat_record.global_report_record
     LANGUAGE plpgsql
@@ -665,7 +624,7 @@ select min(id),max(id) into id1,id2 from _stat_record.lastest_records(2);
    EXCEPTION
     WHEN OTHERS THEN
       GET STACKED DIAGNOSTICS mensaje = message_text, mensaje_detalle =pg_exception_detail, sqlerror = returned_sqlstate;
-      RAISE EXCEPTION 'Otro error: %, %, %', sqlerror, mensaje,mensaje_detalle;
+      RAISE EXCEPTION 'Other error: %, %, %', sqlerror, mensaje,mensaje_detalle;
       return  ;
   raise notice 'record global report';
  return  ; 
@@ -676,10 +635,7 @@ end;
 $$;
 
 
---
--- TOC entry 257 (class 1255 OID 264927)
--- Name: total_report_for_amonth_record(date); Type: FUNCTION; Schema: _stat_record; Owner: -
---
+
 
 CREATE FUNCTION _stat_record.total_report_for_amonth_record(p_month date DEFAULT date(now())) RETURNS SETOF _stat_record.global_report_record
     LANGUAGE plpgsql
@@ -710,7 +666,7 @@ select min(id_record),max(id_record) into id1,id2 from _stat_record._record_numb
    EXCEPTION
     WHEN OTHERS THEN
       GET STACKED DIAGNOSTICS mensaje = message_text, mensaje_detalle =pg_exception_detail, sqlerror = returned_sqlstate;
-      RAISE EXCEPTION 'Otro error: %, %, %', sqlerror, mensaje,mensaje_detalle;
+      RAISE EXCEPTION 'Other error: %, %, %', sqlerror, mensaje,mensaje_detalle;
       return  ;
   raise notice 'record global report';
  return  ; 
@@ -721,10 +677,7 @@ end;
 $_$;
 
 
---
--- TOC entry 253 (class 1255 OID 264924)
--- Name: total_report_record(bigint, bigint); Type: FUNCTION; Schema: _stat_record; Owner: -
---
+
 
 CREATE FUNCTION _stat_record.total_report_record(pid_record_ini bigint, pid_record_last bigint) RETURNS SETOF _stat_record.global_report_record
     LANGUAGE plpgsql
@@ -751,7 +704,7 @@ begin
    EXCEPTION
     WHEN OTHERS THEN
       GET STACKED DIAGNOSTICS mensaje = message_text, mensaje_detalle =pg_exception_detail, sqlerror = returned_sqlstate;
-      RAISE EXCEPTION 'Otro error: %, %, %', sqlerror, mensaje,mensaje_detalle;
+      RAISE EXCEPTION 'Other error: %, %, %', sqlerror, mensaje,mensaje_detalle;
       return  ;
   raise notice 'record global report';
  return  ; 
@@ -762,10 +715,7 @@ end;
 $_$;
 
 
---
--- TOC entry 250 (class 1255 OID 263629)
--- Name: truncate_record(boolean); Type: FUNCTION; Schema: _stat_record; Owner: -
---
+
 
 CREATE FUNCTION _stat_record.truncate_record(p_trunc boolean DEFAULT false) RETURNS boolean
     LANGUAGE plpgsql
@@ -783,7 +733,7 @@ begin
  EXCEPTION
     WHEN OTHERS THEN
       GET STACKED DIAGNOSTICS mensaje = message_text, mensaje_detalle =pg_exception_detail, sqlerror = returned_sqlstate;
-      RAISE EXCEPTION 'Otro error: %, %, %', sqlerror, mensaje,mensaje_detalle;
+      RAISE EXCEPTION 'Other error: %, %, %', sqlerror, mensaje,mensaje_detalle;
       return false ;
        
  
@@ -794,20 +744,14 @@ SET default_tablespace = '';
 
 SET default_with_oids = false;
 
---
--- TOC entry 228 (class 1259 OID 264928)
--- Name: _config_var; Type: TABLE; Schema: _stat_record; Owner: -
---
+
 
 CREATE TABLE _stat_record._config_var (
     config_var_name text
 );
 
 
---
--- TOC entry 204 (class 1259 OID 263608)
--- Name: _db_stat; Type: TABLE; Schema: _stat_record; Owner: -
---
+
 
 CREATE TABLE _stat_record._db_stat (
     id_record bigint,
@@ -820,10 +764,7 @@ CREATE TABLE _stat_record._db_stat (
 );
 
 
---
--- TOC entry 206 (class 1259 OID 263640)
--- Name: _global_object; Type: TABLE; Schema: _stat_record; Owner: -
---
+
 
 CREATE TABLE _stat_record._global_object (
     id_record bigint,
@@ -835,10 +776,7 @@ CREATE TABLE _stat_record._global_object (
 );
 
 
---
--- TOC entry 203 (class 1259 OID 263592)
--- Name: _global_stat; Type: TABLE; Schema: _stat_record; Owner: -
---
+
 
 CREATE TABLE _stat_record._global_stat (
     id_record bigint,
@@ -849,10 +787,7 @@ CREATE TABLE _stat_record._global_stat (
 );
 
 
---
--- TOC entry 205 (class 1259 OID 263632)
--- Name: _object_type; Type: TABLE; Schema: _stat_record; Owner: -
---
+
 
 CREATE TABLE _stat_record._object_type (
     id_object_type integer NOT NULL,
@@ -860,10 +795,7 @@ CREATE TABLE _stat_record._object_type (
 );
 
 
---
--- TOC entry 225 (class 1259 OID 264533)
--- Name: _query_stat; Type: TABLE; Schema: _stat_record; Owner: -
---
+
 
 CREATE TABLE _stat_record._query_stat (
     id_record bigint,
@@ -876,10 +808,7 @@ CREATE TABLE _stat_record._query_stat (
 );
 
 
---
--- TOC entry 201 (class 1259 OID 263542)
--- Name: _record_number; Type: TABLE; Schema: _stat_record; Owner: -
---
+
 
 CREATE TABLE _stat_record._record_number (
     id_record bigint NOT NULL,
@@ -888,10 +817,7 @@ CREATE TABLE _stat_record._record_number (
 );
 
 
---
--- TOC entry 200 (class 1259 OID 263540)
--- Name: _record_number_id_record_seq; Type: SEQUENCE; Schema: _stat_record; Owner: -
---
+
 
 CREATE SEQUENCE _stat_record._record_number_id_record_seq
     START WITH 1
@@ -901,19 +827,12 @@ CREATE SEQUENCE _stat_record._record_number_id_record_seq
     CACHE 1;
 
 
---
--- TOC entry 3077 (class 0 OID 0)
--- Dependencies: 200
--- Name: _record_number_id_record_seq; Type: SEQUENCE OWNED BY; Schema: _stat_record; Owner: -
---
+
 
 ALTER SEQUENCE _stat_record._record_number_id_record_seq OWNED BY _stat_record._record_number.id_record;
 
 
---
--- TOC entry 233 (class 1259 OID 273632)
--- Name: _so_partitions; Type: TABLE; Schema: _stat_record; Owner: -
---
+
 
 CREATE TABLE _stat_record._so_partitions (
     id_record bigint,
@@ -921,10 +840,7 @@ CREATE TABLE _stat_record._so_partitions (
 );
 
 
---
--- TOC entry 202 (class 1259 OID 263551)
--- Name: _variable_type; Type: TABLE; Schema: _stat_record; Owner: -
---
+
 
 CREATE TABLE _stat_record._variable_type (
     id_var_type integer NOT NULL,
@@ -932,10 +848,7 @@ CREATE TABLE _stat_record._variable_type (
 );
 
 
---
--- TOC entry 230 (class 1259 OID 273545)
--- Name: distribution; Type: FOREIGN TABLE; Schema: _stat_record; Owner: -
---
+
 
 CREATE FOREIGN TABLE _stat_record.distribution (
     version text
@@ -947,10 +860,6 @@ OPTIONS (
 );
 
 
---
--- TOC entry 231 (class 1259 OID 273605)
--- Name: meminfo; Type: FOREIGN TABLE; Schema: _stat_record; Owner: -
---
 
 CREATE FOREIGN TABLE _stat_record.meminfo (
     value text
@@ -962,10 +871,7 @@ OPTIONS (
 );
 
 
---
--- TOC entry 232 (class 1259 OID 273629)
--- Name: partitions; Type: FOREIGN TABLE; Schema: _stat_record; Owner: -
---
+
 
 CREATE FOREIGN TABLE _stat_record.partitions (
     fs character varying
@@ -977,19 +883,12 @@ OPTIONS (
 );
 
 
---
--- TOC entry 2921 (class 2604 OID 263545)
--- Name: _record_number id_record; Type: DEFAULT; Schema: _stat_record; Owner: -
---
+
 
 ALTER TABLE ONLY _stat_record._record_number ALTER COLUMN id_record SET DEFAULT nextval('_stat_record._record_number_id_record_seq'::regclass);
 
 
---
--- TOC entry 3070 (class 0 OID 264928)
--- Dependencies: 228
--- Data for Name: _config_var; Type: TABLE DATA; Schema: _stat_record; Owner: -
---
+
 
 INSERT INTO _stat_record._config_var (config_var_name) VALUES ('autovacuum');
 INSERT INTO _stat_record._config_var (config_var_name) VALUES ('autovacuum_analyze_scale_factor');
@@ -1010,35 +909,7 @@ INSERT INTO _stat_record._config_var (config_var_name) VALUES ('log_disconnectio
 INSERT INTO _stat_record._config_var (config_var_name) VALUES ('log_min_duration_statement');
 
 
---
--- TOC entry 3066 (class 0 OID 263608)
--- Dependencies: 204
--- Data for Name: _db_stat; Type: TABLE DATA; Schema: _stat_record; Owner: -
---
 
-
-
---
--- TOC entry 3068 (class 0 OID 263640)
--- Dependencies: 206
--- Data for Name: _global_object; Type: TABLE DATA; Schema: _stat_record; Owner: -
---
-
-
-
---
--- TOC entry 3065 (class 0 OID 263592)
--- Dependencies: 203
--- Data for Name: _global_stat; Type: TABLE DATA; Schema: _stat_record; Owner: -
---
-
-
-
---
--- TOC entry 3067 (class 0 OID 263632)
--- Dependencies: 205
--- Data for Name: _object_type; Type: TABLE DATA; Schema: _stat_record; Owner: -
---
 
 INSERT INTO _stat_record._object_type (id_object_type, description) VALUES (1, 'users');
 INSERT INTO _stat_record._object_type (id_object_type, description) VALUES (2, 'databases');
@@ -1046,184 +917,100 @@ INSERT INTO _stat_record._object_type (id_object_type, description) VALUES (3, '
 INSERT INTO _stat_record._object_type (id_object_type, description) VALUES (4, 'conf');
 
 
---
--- TOC entry 3069 (class 0 OID 264533)
--- Dependencies: 225
--- Data for Name: _query_stat; Type: TABLE DATA; Schema: _stat_record; Owner: -
---
 
-
-
---
--- TOC entry 3063 (class 0 OID 263542)
--- Dependencies: 201
--- Data for Name: _record_number; Type: TABLE DATA; Schema: _stat_record; Owner: -
---
-
-
-
---
--- TOC entry 3071 (class 0 OID 273632)
--- Dependencies: 233
--- Data for Name: _so_partitions; Type: TABLE DATA; Schema: _stat_record; Owner: -
---
-
-
-
---
--- TOC entry 3064 (class 0 OID 263551)
--- Dependencies: 202
--- Data for Name: _variable_type; Type: TABLE DATA; Schema: _stat_record; Owner: -
---
 
 INSERT INTO _stat_record._variable_type (id_var_type, description) VALUES (1, 'numeric');
 INSERT INTO _stat_record._variable_type (id_var_type, description) VALUES (2, 'text');
 INSERT INTO _stat_record._variable_type (id_var_type, description) VALUES (3, 'timestamp');
 
 
---
--- TOC entry 3078 (class 0 OID 0)
--- Dependencies: 200
--- Name: _record_number_id_record_seq; Type: SEQUENCE SET; Schema: _stat_record; Owner: -
---
+
 
 SELECT pg_catalog.setval('_stat_record._record_number_id_record_seq', 1, false);
 
 
---
--- TOC entry 2929 (class 2606 OID 263639)
--- Name: _object_type _object_type_pkey; Type: CONSTRAINT; Schema: _stat_record; Owner: -
---
+
 
 ALTER TABLE ONLY _stat_record._object_type
     ADD CONSTRAINT _object_type_pkey PRIMARY KEY (id_object_type);
 
 
---
--- TOC entry 2923 (class 2606 OID 263550)
--- Name: _record_number _record_number_pkey; Type: CONSTRAINT; Schema: _stat_record; Owner: -
---
+
 
 ALTER TABLE ONLY _stat_record._record_number
     ADD CONSTRAINT _record_number_pkey PRIMARY KEY (id_record);
 
 
---
--- TOC entry 2925 (class 2606 OID 263558)
--- Name: _variable_type _variable_type_pkey; Type: CONSTRAINT; Schema: _stat_record; Owner: -
---
 
 ALTER TABLE ONLY _stat_record._variable_type
     ADD CONSTRAINT _variable_type_pkey PRIMARY KEY (id_var_type);
 
 
---
--- TOC entry 2930 (class 1259 OID 264594)
--- Name: idx_glb_ob_id_record; Type: INDEX; Schema: _stat_record; Owner: -
---
+
 
 CREATE INDEX idx_glb_ob_id_record ON _stat_record._global_object USING btree (id_record);
 
 
---
--- TOC entry 2926 (class 1259 OID 264593)
--- Name: idx_glo_id_record; Type: INDEX; Schema: _stat_record; Owner: -
---
+
 
 CREATE INDEX idx_glo_id_record ON _stat_record._global_stat USING btree (id_record);
 
 
---
--- TOC entry 2931 (class 1259 OID 264592)
--- Name: idx_id_record; Type: INDEX; Schema: _stat_record; Owner: -
---
+
 
 CREATE INDEX idx_id_record ON _stat_record._query_stat USING btree (id_record);
 
 
---
--- TOC entry 2927 (class 1259 OID 264595)
--- Name: idx_stat_id_record; Type: INDEX; Schema: _stat_record; Owner: -
---
+
 
 CREATE INDEX idx_stat_id_record ON _stat_record._db_stat USING btree (id_record);
 
 
---
--- TOC entry 2939 (class 2606 OID 273638)
--- Name: _so_partitions _db_so_id_record_fkey; Type: FK CONSTRAINT; Schema: _stat_record; Owner: -
---
+
 
 ALTER TABLE ONLY _stat_record._so_partitions
     ADD CONSTRAINT _db_so_id_record_fkey FOREIGN KEY (id_record) REFERENCES _stat_record._record_number(id_record) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
---
--- TOC entry 2934 (class 2606 OID 263614)
--- Name: _db_stat _db_stat_id_record_fkey; Type: FK CONSTRAINT; Schema: _stat_record; Owner: -
---
+
 
 ALTER TABLE ONLY _stat_record._db_stat
     ADD CONSTRAINT _db_stat_id_record_fkey FOREIGN KEY (id_record) REFERENCES _stat_record._record_number(id_record) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
---
--- TOC entry 2935 (class 2606 OID 263619)
--- Name: _db_stat _db_stat_id_var_type_fkey; Type: FK CONSTRAINT; Schema: _stat_record; Owner: -
---
+
 
 ALTER TABLE ONLY _stat_record._db_stat
     ADD CONSTRAINT _db_stat_id_var_type_fkey FOREIGN KEY (id_var_type) REFERENCES _stat_record._variable_type(id_var_type) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
---
--- TOC entry 2938 (class 2606 OID 264539)
--- Name: _query_stat _global_object_id_query_fkey; Type: FK CONSTRAINT; Schema: _stat_record; Owner: -
---
+
 
 ALTER TABLE ONLY _stat_record._query_stat
     ADD CONSTRAINT _global_object_id_query_fkey FOREIGN KEY (id_record) REFERENCES _stat_record._record_number(id_record) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
---
--- TOC entry 2936 (class 2606 OID 263646)
--- Name: _global_object _global_object_id_record_fkey; Type: FK CONSTRAINT; Schema: _stat_record; Owner: -
---
+
 
 ALTER TABLE ONLY _stat_record._global_object
     ADD CONSTRAINT _global_object_id_record_fkey FOREIGN KEY (id_record) REFERENCES _stat_record._record_number(id_record) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
---
--- TOC entry 2937 (class 2606 OID 263651)
--- Name: _global_object _global_oject_id_var_object_fkey; Type: FK CONSTRAINT; Schema: _stat_record; Owner: -
---
+
 
 ALTER TABLE ONLY _stat_record._global_object
     ADD CONSTRAINT _global_oject_id_var_object_fkey FOREIGN KEY (id_object_type) REFERENCES _stat_record._object_type(id_object_type) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
---
--- TOC entry 2932 (class 2606 OID 263598)
--- Name: _global_stat _global_stat_id_record_fkey; Type: FK CONSTRAINT; Schema: _stat_record; Owner: -
---
+
 
 ALTER TABLE ONLY _stat_record._global_stat
     ADD CONSTRAINT _global_stat_id_record_fkey FOREIGN KEY (id_record) REFERENCES _stat_record._record_number(id_record) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
---
--- TOC entry 2933 (class 2606 OID 263603)
--- Name: _global_stat _global_stat_id_var_type_fkey; Type: FK CONSTRAINT; Schema: _stat_record; Owner: -
---
+
 
 ALTER TABLE ONLY _stat_record._global_stat
     ADD CONSTRAINT _global_stat_id_var_type_fkey FOREIGN KEY (id_var_type) REFERENCES _stat_record._variable_type(id_var_type) ON UPDATE CASCADE ON DELETE CASCADE;
 
-
--- Completed on 2019-03-21 15:53:40 -03
-
---
--- PostgreSQL database dump complete
---
 

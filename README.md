@@ -24,8 +24,11 @@ CREATE EXTENSION stat_record CASCADE;
 
 --Tables
 _stat_record._record_number ----table where store data about the record taked
+
 _stat_record._global_stat ---- table where store data about global stats
+
 _stat_record._db_stat ---- table where store data about database stats
+
 _stat_record._query_stat ---- table where store data about database query stats
 
 --Functions:
@@ -35,11 +38,13 @@ select _stat_record.truncate_record( boolean) ---- truncate all record taked (bo
 select _stat_record.delete_record(bigint) ---- delete a record with id_record parameter
 select * from _stat_record.detail_record (bigint) ----get report with all global, database , objects and  querys stats about one specific record
 select * from _stat_record.lastest_records(bigint) ---- get the lastes record (if a number (N) is specified, it shows the last N records)
+--nice to compare record taken, to see evolution of database
 select * from _stat_record.global_report_record(bigint,bigint) ----get report with global stats about id_record specified
 select * from _stat_record.total_report_record(bigint,bigint) ----get report with all global, database, objects and  querys stats about id_records specified
 select * from _stat_record.total_report_for_2last_record() -----get report with all global, database , objects and  querys stats about two last record taked
 select * from _stat_record.total_report_for_amonth_record(date) -----get report with all global,  database , objecst and  querys stats about first and the last record taked a moth specified
 select _stat_record.export_total_report_record(bigint,bigint,text) ----export CSV report with all global,  database , objects and  querys stats about first and the last record taked a moth specified y some path(by default /tmp/global_report.csv)
+--nice to compare record taken, to see evolution of database
 ```
 
 

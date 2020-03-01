@@ -404,7 +404,7 @@ detail_record
 stat_record=#select * from _stat_record.total_report_record(1,2);
 
 
---get the total reports about 1 and 3 records and some different and export to some file csv
+--get the total reports about 1 and 2 records and some different and export to some file csv
 stat_record=#select _stat_record.export_total_report_record(1,2,'/tmp/reporte.csv')
 
 --get the total reports about last tow records taked and some different

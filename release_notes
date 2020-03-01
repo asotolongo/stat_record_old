@@ -1,0 +1,6 @@
+0.2.0
+
+ --add bgwriter statisticts
+ --add table and index bloat statisticts
+ --remove SO information and fdw_file extension
+ --allow limit to record_dailt, total_report*

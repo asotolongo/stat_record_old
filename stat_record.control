@@ -1,6 +1,6 @@
 #extesion
-comment = 'Extension record stats/reports from databases stats server like:  connection, size, cache, table and index use, querys, etc  '
-default_version = '0.1.0'
+comment = 'Extension record stats/reports from databases stats server like:  connection, size, cache, table and index use, bloat, querys, etc  '
+default_version = '0.2.0'
 relocatable = true
 superuser = true
-requires = 'file_fdw,pg_stat_statements'
+requires = 'pg_stat_statements'

@@ -1,10 +1,8 @@
 stat_record  extension
 ======================================
 
-This PostgreSQL extension implements to register some statistics on the database server at any time and can display several reports on statistics such as: connection, size, cache, use of table and index, queries, etc.
-and you can compare some statistics over time to see the changes.
-#required PG10+, file_fdw, pg_stat_statements extensions and linux SO
-
+This PostgreSQL extension can be useful for the DBA to analyze server behavior over time. Because PostgreSQL stores current statistics, this extension is implemented to record statistics on the database server at any time and can be consulted when required, and also display several reports on statistics such as: connection, size, cache, usage of table and index. , queries, bloat, etc. and you can compare some statistics over time to see the changes and evolution.
+#required PG10+,  pg_stat_statements extensions
 
 
 IMPORTANT: There're bugs in the existing version, please contact to me.
@@ -14,7 +12,7 @@ Building and install
 --------
 Run: make install 
 --if not install,  you must make sure you can see the binary pg_config,
-maybe setting postgresql binary path in the SO  or setting PG_CONFIG = /path_to_pg_config/  in the makefile 
+maybe setting postgresql binary path in the SO  or setting PG_CONFIG = /path_to_pg_config/  in the makefile  or make install /path_to_pg_config/
 
 In postgresql execute: 
 CREATE EXTENSION stat_record CASCADE;
@@ -33,12 +31,13 @@ _stat_record._record_number ----table where store information about the record t
 select _stat_record.take_record()  ---- take stats record 
 select _stat_record.truncate_record( boolean) ---- truncate all record taked (boolean = true, reset id_record to 1)
 select _stat_record.delete_record(bigint) ---- delete a record with id_record parameter
+select * from _stat_record.detail_record (bigint) ----get report with all global, database , objects and  querys stats about one specific record
 select * from _stat_record.lastest_records(bigint) ---- get the lastes record (if a number (N) is specified, it shows the last N records)
 select * from _stat_record.global_report_record(bigint,bigint) ----get report with global stats about id_record specified
-select * from _stat_record.total_report_record(bigint,bigint) ----get report with all global and database and  querys stats about id_records specified
-select * from _stat_record.total_report_for_2last_record() -----get report with all global and database and  querys stats about two last record taked
-select * from _stat_record.total_report_for_amonth_record(date) -----get report with all global and database and  querys stats about first and the last record taked a moth specified
-select _stat_record.export_total_report_record(bigint,bigint,text) ----export CSV report with all global and database and  querys stats about first and the last record taked a moth specified y some path(by default /tmp/global_report.csv)
+select * from _stat_record.total_report_record(bigint,bigint) ----get report with all global, database, objects and  querys stats about id_records specified
+select * from _stat_record.total_report_for_2last_record() -----get report with all global, database , objects and  querys stats about two last record taked
+select * from _stat_record.total_report_for_amonth_record(date) -----get report with all global,  database , objecst and  querys stats about first and the last record taked a moth specified
+select _stat_record.export_total_report_record(bigint,bigint,text) ----export CSV report with all global,  database , objects and  querys stats about first and the last record taked a moth specified y some path(by default /tmp/global_report.csv)
 
 
 

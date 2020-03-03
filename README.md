@@ -21,7 +21,7 @@ make install
 
 --if not install,  you must make sure you can see the binary pg_config,
 maybe setting postgresql binary path in the SO  or setting PG_CONFIG = /path_to_pg_config/  in the makefile 
-or run: make  PG_CONFIG = /path_to_pg_config/ and  make install  PG_CONFIG = /path_to_pg_config/ 
+or run: `make  PG_CONFIG = /path_to_pg_config/` and  `make install  PG_CONFIG = /path_to_pg_config/`
 
 In postgresql database execute: 
 CREATE EXTENSION stat_record CASCADE;
@@ -43,8 +43,8 @@ A bgworker called `stat_record` will start and will take record every (stat_reco
 
 --It create schema stat_record and tables/functions
 
-```
 --Tables
+```
 _stat_record._record_number ----table where store data about the record taked
 
 _stat_record._global_stat ---- table where store data about global stats

@@ -20,13 +20,13 @@ make install
 ```
 
 --if not install,  you must make sure you can see the binary pg_config,
-maybe setting postgresql binary path in the SO  or setting PG_CONFIG = /path_to_pg_config/  in the makefile 
+maybe setting PostgreSQL binary path in the OS  or setting PG_CONFIG = /path_to_pg_config/  in the makefile 
 or run: `make  PG_CONFIG = /path_to_pg_config/` and  `make install  PG_CONFIG = /path_to_pg_config/`
 
 In postgresql database execute: 
 CREATE EXTENSION stat_record CASCADE;
 
-After, must configurate stat_record  extension  adding to shared_preload_libraries the pg_stat_statements,stat_record libraries  like :
+After, must configurate stat_record  extension  adding to shared_preload_libraries parameter in postgresql.conf , the pg_stat_statements,stat_record libraries  like :
 ```
 shared_preload_libraries = 'pg_stat_statements,stat_record' --require restart services
 
@@ -34,7 +34,7 @@ shared_preload_libraries = 'pg_stat_statements,stat_record' --require restart se
 and GUC variable
 
 ```
-stat_record.database_name = 'you_database' --default postgres 
+stat_record.database_name = 'your_database' --default postgres 
 stat_record.interval = 3600 -- in sec default 3600 seconds (1 hour)
 ```
 

@@ -43,6 +43,7 @@ A bgworker called `stat_record` will start and will take record every (stat_reco
 
 --It create schema stat_record and tables/functions
 
+```
 --Tables
 _stat_record._record_number ----table where store data about the record taked
 
@@ -51,6 +52,8 @@ _stat_record._global_stat ---- table where store data about global stats
 _stat_record._db_stat ---- table where store data about database stats
 
 _stat_record._query_stat ---- table where store data about database query stats
+
+```
 
 --Functions:
 ```

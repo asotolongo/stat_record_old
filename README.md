@@ -28,12 +28,12 @@ In your database execute:
 CREATE EXTENSION stat_record CASCADE;
 ```
 
-After, must configurate stat_record  extension  adding to shared_preload_libraries parameter in postgresql.conf , the pg_stat_statements,stat_record libraries  like :
+After, must configurate stat_record  extension  adding to shared_preload_libraries parameter in postgresql.conf , the pg_stat_statements,stat_record libraries  like:
 ```
 shared_preload_libraries = 'pg_stat_statements,stat_record' --require restart services
 
 ```
-and GUC variables
+and GUC variables:
 
 ```
 stat_record.database_name = 'your_database' --default postgres 
@@ -59,7 +59,7 @@ A bgworker called `stat_record worker` will start and will take record every (st
 
 The extension create schema stat_record and tables/functions
 
---Tables
+--Tables:
 ```
 _stat_record._record_number ----table where store data about the record taked
 

@@ -4,3 +4,12 @@
  --add table and index bloat statisticts
  --remove SO information and fdw_file extension
  --allow limit to record_dailt, total_report*
+
+
+0.3.0
+
+ --add bgworker to collect statistics
+ --remove some unnecessary tables
+ --fix limit to record_dailt, total_report*
+ --add config variables for parallel
+ --add query cache ratio metrict 

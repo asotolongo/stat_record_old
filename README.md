@@ -1,7 +1,10 @@
 stat_record  extension
 ======================================
 
-This PostgreSQL extension can be useful for the DBA to analyze server behavior over time. Because PostgreSQL stores current statistics, this extension is implemented to record statistics on the database server at any time and can be consulted when required, and also display several reports on statistics such as: connection, size, cache, usage of table and index. , queries, bloat, etc. and you can compare some statistics over time to see the changes and evolution.
+This PostgreSQL extension can be useful for the DBA to analyze server behavior over time. 
+Because PostgreSQL stores current statistics, this extension is implemented to record statistics on the database server at any time and can be consulted when required,
+and also display several reports on statistics such as: connection, size, cache, usage of table and index, 
+queries, bloat, etc. and you can compare some statistics over time to see the changes and evolution.
 #required PG10+,  pg_stat_statements extensions
 
 
@@ -10,14 +13,32 @@ IMPORTANT: There're bugs in the existing version, please contact to me.
 
 Building and install
 --------
-Run: make install 
+Run: 
+```
+make
+make install 
+```
+
 --if not install,  you must make sure you can see the binary pg_config,
 maybe setting postgresql binary path in the SO  or setting PG_CONFIG = /path_to_pg_config/  in the makefile 
-or run:  make install  PG_CONFIG = /path_to_pg_config/ 
+or run: make  PG_CONFIG = /path_to_pg_config/ and  make install  PG_CONFIG = /path_to_pg_config/ 
 
-In postgresql execute: 
+In postgresql database execute: 
 CREATE EXTENSION stat_record CASCADE;
 
+After, must configurate stat_record  extension  adding to shared_preload_libraries the pg_stat_statements,stat_record libraries  like :
+```
+shared_preload_libraries = 'pg_stat_statements,stat_record' --require restart services
+
+```
+and GUC variable
+
+```
+stat_record.database_name = 'you_database' --default postgres 
+stat_record.interval = 3600 -- in sec default 3600 seconds (1 hour)
+```
+
+A bgworker called `stat_record` will start and will take record every (stat_record.interval), but a manual record can be taken too
 
 
 --It create schema stat_record and tables/functions
@@ -33,7 +54,7 @@ _stat_record._query_stat ---- table where store data about database query stats
 
 --Functions:
 ```
-select _stat_record.take_record()  ---- take stats record 
+select _stat_record.take_record()  ---- take stats record about server and databases
 select _stat_record.truncate_record( boolean) ---- truncate all record taked (boolean = true, reset id_record to 1)
 select _stat_record.delete_record(bigint) ---- delete a record with id_record parameter
 select * from _stat_record.detail_record (bigint) ----get report with all global, database , objects and  querys stats about one specific record
@@ -51,6 +72,14 @@ select _stat_record.export_total_report_record(bigint,bigint,text) ----export CS
 --Example of use:
 
 ```
+--get all records taken
+stat_record=#select * from  _stat_record._record_number order by 2 desc;
+ id |        record_time         | record_description 
+----+----------------------------+--------------------
+  2 | 2020-03-01 13:51:11.009518 | 
+  1 | 2020-03-01 13:50:44.495992 | 
+
+
 select _stat_record.take_record()--taken a record
 stat_record=# select _stat_record.take_record();
 NOTICE:  record taked
@@ -123,7 +152,7 @@ stat_record=# select * from _stat_record.global_report_record(1,2);
      Databases chache ratio: 0.06 %
      Databases connections: 0 
      Databases active connections: 0 
-     Databases tuples tempfiles: 0 
+     Databases tempfiles: 0 
      Databases tuples deleted: 0 
      Databases tuples updated: 3781 
      Databases tuples inserted: 542 
@@ -145,7 +174,7 @@ stat_record=# select * from _stat_record.global_report_record(1,2);
 
 
 --get the total(global and databse statistics) from specific record
-stat_record=#select * from _stat_record.detail_record(2) ;
+stat_record=#select * from _stat_record.detail_record(2,10) ;
 detail_record                                                                                                                                                                                                                                                                                                                                          
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  id: 2 - take date: 2020-03-01 13:51:11.009518
@@ -158,7 +187,7 @@ detail_record
    Databases chache ratio: 99.23
    Databases connections: 4
    Databases active connections: 1
-   Databases tuples tempfiles: 43
+   Databases tempfiles: 43
    Databases tuples deleted: 42851
    Databases tuples updated: 31239
    Databases tuples inserted: 31660959
@@ -410,8 +439,8 @@ detail_record
 stat_record=#select * from _stat_record.total_report_record(1,2);
 
 
---get the total reports about 1 and 2 records and some different and export to some file csv
-stat_record=#select _stat_record.export_total_report_record(1,2,'/tmp/reporte.csv')
+--get the total reports about 1 and 2 records and some different and export to some file csv, limit 3 for objects statistics
+stat_record=#select _stat_record.export_total_report_record(1,2,3,'/tmp/reporte.csv')
 
 --get the total reports about last tow records taked and some different
 stat_record=#select * from select * from _stat_record.total_report_for_2last_record()

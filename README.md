@@ -24,7 +24,9 @@ maybe setting PostgreSQL binary path in the OS  or setting PG_CONFIG = /path_to_
 or run: `make  PG_CONFIG = /path_to_pg_config/` and  `make install  PG_CONFIG = /path_to_pg_config/`
 
 In your database execute: 
+```
 CREATE EXTENSION stat_record CASCADE;
+```
 
 After, must configurate stat_record  extension  adding to shared_preload_libraries parameter in postgresql.conf , the pg_stat_statements,stat_record libraries  like :
 ```

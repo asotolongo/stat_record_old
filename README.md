@@ -99,8 +99,7 @@ stat_record=#select * from  _stat_record._record_number order by 2 desc;
   2 | 2020-03-01 13:51:11.009518 | 
   1 | 2020-03-01 13:50:44.495992 | 
 
-
-select _stat_record.take_record()--take a manual record
+--take a manual record
 stat_record=# select _stat_record.take_record();
 NOTICE:  record taked
  take_record 
@@ -109,30 +108,20 @@ NOTICE:  record taked
 (1 fila)
 
 --wait a time and take the record again 
-select _stat_record.take_record(); --take other  manual record
+stat_record=# select _stat_record.take_record(); --take other  manual record
 NOTICE:  record taked
  take_record 
 -------------
  t
 (1 fila)
 
-
-
-
-
 --getting the last two records
-stat_record=#  select * from _stat_record.lastest_records(2);
+stat_record=# select * from _stat_record.lastest_records(2);
  id |        record_time         | record_description 
 ----+----------------------------+--------------------
   2 | 2020-03-01 13:51:11.009518 | 
   1 | 2020-03-01 13:50:44.495992 | 
 (2 filas)
-
-
-
-
-
-
 
 --get global report about 1 and 2 records
 stat_record=# select * from _stat_record.global_report_record(1,2);
@@ -185,7 +174,6 @@ stat_record=# select * from _stat_record.global_report_record(1,2);
      Checkpoints_req: 0 
      Checkpoints_timed: 0 
 (46 filas)
-
 
 --get the total(global and databse statistics) from specific record
 stat_record=#select * from _stat_record.detail_record(2,10) ;
@@ -447,22 +435,21 @@ detail_record
      public.products->ix_prod_special: 0.00 MB
 (289 filas)
 
-
-
 --get the total(global and databse statistics) reports about 1 and 2 records and some different
 stat_record=#select * from _stat_record.total_report_record(1,2);
-
+...
 
 --get the total reports about 1 and 2 records and some different and export to some file csv, limit 3 for objects statistics
 stat_record=#select _stat_record.export_total_report_record(1,2,3,'/tmp/reporte.csv')
+...
 
 --get the total reports about last tow records taked and some different
 stat_record=#select * from select * from _stat_record.total_report_for_2last_record()
-
+...
 
 --get the total reports about fisrt and the last records taked in the month 
 stat_record=#select * from _stat_record.total_report_for_amonth_record('2019-03-01') --get report in march 2019
-
+...
 
 --delete some record by id
 stat_record=# select _stat_record.delete_record(1);
@@ -472,12 +459,8 @@ NOTICE:  record deleted
  t
 (1 fila)
 
-
-
-
-
 --delete all records and restart the id from 1, if parameters if false do nor restart de id from 1
-select _stat_record.truncate_record( true);
+stat_record=# select _stat_record.truncate_record( true);
 NOTICE:  truncando además la tabla «_global_stat»
 NOTICE:  truncando además la tabla «_db_stat»
 NOTICE:  truncando además la tabla «_global_object»

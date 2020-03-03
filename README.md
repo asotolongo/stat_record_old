@@ -5,7 +5,7 @@ This PostgreSQL extension can be useful for the DBA to analyze server behavior o
 Because PostgreSQL stores current statistics, this extension is implemented to record statistics on the database server at any time and can be consulted when required,
 and also display several reports on statistics such as: connection, size, cache, usage of table and index, 
 queries, bloat, etc. and you can compare some statistics over time to see the changes and evolution.
-#required PG10+,  pg_stat_statements extension
+#required PG10+ and  pg_stat_statements extension
 
 
 IMPORTANT: There're bugs in the existing version, please contact to me.
@@ -19,11 +19,11 @@ make
 make install 
 ```
 
---if not install,  you must make sure you can see the binary pg_config,
+If not install,  you must make sure you can see the binary pg_config,
 maybe setting PostgreSQL binary path in the OS  or setting PG_CONFIG = /path_to_pg_config/  in the makefile 
 or run: `make  PG_CONFIG = /path_to_pg_config/` and  `make install  PG_CONFIG = /path_to_pg_config/`
 
-In postgresql database execute: 
+In your database execute: 
 CREATE EXTENSION stat_record CASCADE;
 
 After, must configurate stat_record  extension  adding to shared_preload_libraries parameter in postgresql.conf , the pg_stat_statements,stat_record libraries  like :
@@ -31,17 +31,31 @@ After, must configurate stat_record  extension  adding to shared_preload_librari
 shared_preload_libraries = 'pg_stat_statements,stat_record' --require restart services
 
 ```
-and GUC variable
+and GUC variables
 
 ```
 stat_record.database_name = 'your_database' --default postgres 
 stat_record.interval = 3600 -- in sec default 3600 seconds (1 hour)
 ```
+Restart PostgreSQL services.
 
-A bgworker called `stat_record` will start and will take record every (stat_record.interval), but a manual record can be taken too
+A bgworker called `stat_record worker` will start and will take record every (stat_record.interval), but you can also take a manual record.
+
+```
+24819 postgres  20   0  333264  29388  27312 S   0,0  0,2   0:00.10 /usr/lib/postgresql/10/bin/postgres -D /var/lib/postgresql/10/main -c config_file=/etc/postgresql/10/main/postgresql.conf               
+24820 postgres  20   0  184940   3560   1496 S   0,0  0,0   0:00.00 postgres: 10/main: logger process                                                                                                       
+24822 postgres  20   0  333264   4068   1992 S   0,0  0,0   0:00.00 postgres: 10/main: checkpointer process                                                                                                 
+24823 postgres  20   0  333400   4068   1992 S   0,0  0,0   0:00.01 postgres: 10/main: writer process                                                                                                       
+24824 postgres  20   0  333264   8992   6916 S   0,0  0,1   0:00.01 postgres: 10/main: wal writer process                                                                                                   
+24825 postgres  20   0  333968   7460   4912 S   0,0  0,0   0:00.01 postgres: 10/main: autovacuum launcher process                                                                                          
+24826 postgres  20   0  188780   5444   2200 S   0,0  0,0   0:00.01 postgres: 10/main: stats collector process                                                                                              
+24827 postgres  20   0  346840  32132  20396 S   0,0  0,2   0:00.24 postgres: 10/main: bgworker: stat_record worker                                                                                         
+24828 postgres  20   0  333664   5064   2868 S   0,0  0,0   0:00.00 postgres: 10/main: bgworker: logical replication launcher 
+
+```
 
 
---It create schema stat_record and tables/functions
+The extension create schema stat_record and tables/functions
 
 --Tables
 ```
@@ -72,7 +86,8 @@ select _stat_record.export_total_report_record(bigint,bigint,text) ----export CS
 ```
 
 
---Example of use:
+Example of use:
+--------
 
 ```
 --get all records taken
@@ -83,7 +98,7 @@ stat_record=#select * from  _stat_record._record_number order by 2 desc;
   1 | 2020-03-01 13:50:44.495992 | 
 
 
-select _stat_record.take_record()--taken a record
+select _stat_record.take_record()--take a manual record
 stat_record=# select _stat_record.take_record();
 NOTICE:  record taked
  take_record 
@@ -92,7 +107,7 @@ NOTICE:  record taked
 (1 fila)
 
 --wait a time and take the record again 
-select _stat_record.take_record();
+select _stat_record.take_record(); --take other  manual record
 NOTICE:  record taked
  take_record 
 -------------
@@ -100,13 +115,7 @@ NOTICE:  record taked
 (1 fila)
 
 
---wait a time and take the record again 
-select _stat_record.take_record();
-NOTICE:  record taked
- take_record 
--------------
- t
-(1 fila)
+
 
 
 --getting the last two records

@@ -13,3 +13,5 @@
  --fix limit to record_dailt, total_report*
  --add config variables for parallel
  --add query cache ratio metrict 
+
+

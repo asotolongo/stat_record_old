@@ -118,7 +118,7 @@ begin
      RETURN NEXT result ;
     end loop;
 
-    for result in ( select '  '|| lim::text ||' Queries with  more row  returned: '
+    for result in ( select '  '|| lim::text ||' Queries with  more rows  returned: '
                union all
                select '    '||'db: '|| bd||' -- query: ' ||query_text||' -- rows: '||stat_val  from ( select * from _stat_record._query_stat where id_Record =$1 order by stat_val::numeric desc )  as sub 
                 where id_Record =$1 and stat_name='rows'  limit $2+1 ) loop

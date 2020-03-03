@@ -5,7 +5,7 @@ This PostgreSQL extension can be useful for the DBA to analyze server behavior o
 Because PostgreSQL stores current statistics, this extension is implemented to record statistics on the database server at any time and can be consulted when required,
 and also display several reports on statistics such as: connection, size, cache, usage of table and index, 
 queries, bloat, etc. and you can compare some statistics over time to see the changes and evolution.
-#required PG10+,  pg_stat_statements extensions
+#required PG10+,  pg_stat_statements extension
 
 
 IMPORTANT: There're bugs in the existing version, please contact to me.

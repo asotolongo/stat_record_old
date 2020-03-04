@@ -9,7 +9,7 @@
 #include "storage/proc.h"
 #include "storage/shmem.h"
 
-/* these headers are used by this particular worker's code */
+/* others headers are used by this particular worker's code */
 #include "access/xact.h"
 #include "executor/spi.h"
 #include "fmgr.h"
@@ -21,15 +21,13 @@
 
 PG_MODULE_MAGIC;
 
-void		_PG_init(void);
+void	_PG_init(void);
 void    stat_record_main(Datum) pg_attribute_noreturn();
 
 /* flags set by signal handlers */
 static volatile sig_atomic_t sigterm_activated = false;
 static char *countDatabaseName = "postgres";
 static int interval = 3600;
-
-
 
 
 static void
@@ -39,15 +37,15 @@ sighup_handler( SIGNAL_ARGS )
 	if (MyProc)
 		SetLatch(&MyProc->procLatch);
 
-  /* restore original errno */
+    /* restore original errno */
 	errno = caught_errno;
 }
 
 static void
 sigterm_handler( SIGNAL_ARGS )
 {
-  sighup_handler( postgres_signal_arg );
-  sigterm_activated = true;
+    sighup_handler( postgres_signal_arg );
+    sigterm_activated = true;
 }
 
 
@@ -56,29 +54,22 @@ stat_record_main( Datum main_arg )
 {
 
 	StringInfoData queryStringData;
+	char *log_username = "postgres";
+	
 	initStringInfo( &queryStringData );
-
-
-  char *log_username       = "postgres";
-
-
-
+   
 	elog( LOG, "Starting stat_record worker" );
-
-
 
 	pqsignal( SIGHUP,  sighup_handler );
 	pqsignal( SIGTERM, sigterm_handler );
-  sigterm_activated = false;
+    sigterm_activated = false;
 	BackgroundWorkerUnblockSignals();
 
     #if (PG_VERSION_NUM < 110000)
-	BackgroundWorkerInitializeConnection(countDatabaseName, log_username);
-#else
-	BackgroundWorkerInitializeConnection(countDatabaseName, log_username, 0);
-#endif
-
-	
+	  BackgroundWorkerInitializeConnection(countDatabaseName, log_username);
+    #else
+	  BackgroundWorkerInitializeConnection(countDatabaseName, log_username, 0);
+    #endif
 
 	/*
 	 * Main loop: do this until the SIGTERM handler tells us to terminate
@@ -87,28 +78,22 @@ stat_record_main( Datum main_arg )
 	{
 		int	ret;
 		int	rc;
-
-
 		rc = WaitLatch( &MyProc->procLatch,
 					          WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
                     1000L * interval ,
-                    PG_WAIT_EXTENSION ); /* 10 seconds */
+                    PG_WAIT_EXTENSION ); /* 1 * interval sec */
 		ResetLatch( &MyProc->procLatch );
 
 		if ( rc & WL_POSTMASTER_DEATH )
 			proc_exit( 1 );
-
 
 		SetCurrentStatementStartTimestamp();
 		StartTransactionCommand();
 		SPI_connect();
 		PushActiveSnapshot( GetTransactionSnapshot() );
 		pgstat_report_activity( STATE_RUNNING, queryStringData.data );
-
 		resetStringInfo( &queryStringData );
-		appendStringInfo( &queryStringData,
-                      "select _stat_record.take_record(); " );
-
+		appendStringInfo( &queryStringData,"select _stat_record.take_record();");
 
 		elog( LOG, "Taking record with stat_record" );
 
@@ -118,7 +103,6 @@ stat_record_main( Datum main_arg )
         
 		if ( ret != SPI_OK_SELECT )
 			elog( FATAL, "stat_record: SPI_execute failed with error code: %d", ret );
-
 
 		SPI_finish();
 		PopActiveSnapshot();
@@ -161,8 +145,7 @@ _PG_init(void)
 		NULL,
 		NULL,
 		NULL);  
-		
-
+	
 	/* set up worker data */
 	worker.bgw_flags         = BGWORKER_SHMEM_ACCESS
                              | BGWORKER_BACKEND_DATABASE_CONNECTION;

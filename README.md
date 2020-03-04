@@ -475,6 +475,6 @@ NOTICE:  truncando además la tabla «_so_partitions»
 
 
 
-Anthony R. Sotolongo leon
+Anthony R. Sotolongo León
 asotolongo@gmail.com
 

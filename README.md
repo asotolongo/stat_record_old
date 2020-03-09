@@ -7,6 +7,7 @@ Because of PostgreSQL stores current statistics, this extension is implemented t
 Periodic snapshots can help you see/analyze the evolution of the database server and can characterize it, the take the "snapshot" is made by self PostgreSQL , no need external agent or cron tool
 Also display several reports on statistics and evolution such as: connection, size, cache, usage of table and index, 
 queries, bloat, etc. and you can compare some statistics over time to see the changes. This PostgreSQL extension can be useful for the DBA to analyze server behavior over time. 
+
 #required PG10+ and  pg_stat_statements extension
 
 

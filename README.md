@@ -1,11 +1,35 @@
 stat_record  extension
 ======================================
 
-This PostgreSQL extension can be useful for the DBA to analyze server behavior over time. 
-Because PostgreSQL stores current statistics, this extension is implemented to record statistics on the database server at any time and can be consulted when required,
-and also display several reports on statistics such as: connection, size, cache, usage of table and index, 
-queries, bloat, etc. and you can compare some statistics over time to see the changes and evolution.
+
+
+Because of PostgreSQL stores current statistics, this extension is implemented the concept of "snapshots" to record statistics(pg_stat_* and some other information) from the PostgreSQL database server at any time and can be consulted when required,
+Periodic snapshots can help you see/analyze the evolution of the database server and can characterize it, the take the "snapshot" is made by self PostgreSQL , no need external agent or cron tool
+Also display several reports on statistics and evolution such as: connection, size, cache, usage of table and index, 
+queries, bloat, etc. and you can compare some statistics over time to see the changes. This PostgreSQL extension can be useful for the DBA to analyze server behavior over time. 
 #required PG10+ and  pg_stat_statements extension
+
+
+Statistics and information collected
+-------
+  * Information 
+   * server version
+   * server start/reload
+   * WAL information
+   * Users
+   * Tablespaces
+   * Configurations
+ * Statistics
+   * Database 
+   * Bgwriter 
+   * Queries 
+   * Tables
+   * Indexes
+   * Maintenance
+   * Bloat
+       
+ 
+ 
 
 
 IMPORTANT: There're bugs in the existing version, please contact to me.
@@ -37,7 +61,8 @@ and GUC variables:
 
 ```
 stat_record.database_name = 'your_database' --default postgres 
-stat_record.interval = 3600 -- in sec default 3600 seconds (1 hour)
+stat_record.interval = 3600 -- in sec default 3600 seconds (1h)
+stat_record.retention = 7 -- in days default 7 days 
 ```
 Restart PostgreSQL services.
 
@@ -57,7 +82,7 @@ A bgworker called `stat_record worker` will start and will take record every (st
 ```
 
 
-The extension create schema stat_record and tables/functions
+The extension create schema stat_record and tables/functions/view
 
 --Tables:
 ```
@@ -71,20 +96,25 @@ _stat_record._query_stat ---- table where store data about database query stats
 
 ```
 
+--View
+```v_global_stat_value_diff ---- show information about global server values and snapshot diff, to see evolution of database
+```
+
 --Functions:
 ```
 select _stat_record.take_record()  ---- take stats record about server and databases
 select _stat_record.truncate_record( boolean) ---- truncate all record taked (boolean = true, reset id_record to 1)
 select _stat_record.delete_record(bigint) ---- delete a record with id_record parameter
+
+--reports functions
 select * from _stat_record.detail_record (bigint) ----get report with all global, database , objects and  querys stats about one specific record
 select * from _stat_record.lastest_records(bigint) ---- get the lastes record (if a number (N) is specified, it shows the last N records)
---nice to compare record taken, to see evolution of database
 select * from _stat_record.global_report_record(bigint,bigint) ----get report with global stats about id_record specified
 select * from _stat_record.total_report_record(bigint,bigint) ----get report with all global, database, objects and  querys stats about id_records specified
 select * from _stat_record.total_report_for_2last_record() -----get report with all global, database , objects and  querys stats about two last record taked
 select * from _stat_record.total_report_for_amonth_record(date) -----get report with all global,  database , objecst and  querys stats about first and the last record taked a moth specified
 select _stat_record.export_total_report_record(bigint,bigint,text) ----export CSV report with all global,  database , objects and  querys stats about first and the last record taked a moth specified y some path(by default /tmp/global_report.csv)
---nice to compare record taken, to see evolution of database
+--reports functions
 ```
 
 
@@ -94,10 +124,15 @@ Example of use:
 ```
 --get all records taken
 stat_record=#select * from  _stat_record._record_number order by 2 desc;
- id |        record_time         | record_description 
-----+----------------------------+--------------------
-  2 | 2020-03-01 13:51:11.009518 | 
-  1 | 2020-03-01 13:50:44.495992 | 
+ id_record |         date_take          | description 
+-----------+----------------------------+-------------
+         7 | 2020-03-07 07:12:58.459051 | 
+         6 | 2020-03-07 07:12:12.856504 | 
+         5 | 2020-03-07 07:06:05.774309 | 
+         4 | 2020-03-07 07:02:03.645995 | 
+         3 | 2020-03-07 06:52:03.288628 | 
+(7 filas)
+
 
 --take a manual record
 stat_record=# select _stat_record.take_record();
@@ -107,117 +142,115 @@ NOTICE:  record taked
  t
 (1 fila)
 
---wait a time and take the record again 
-stat_record=# select _stat_record.take_record(); --take other  manual record
-NOTICE:  record taked
- take_record 
--------------
- t
-(1 fila)
 
---getting the last two records
-stat_record=# select * from _stat_record.lastest_records(2);
- id |        record_time         | record_description 
-----+----------------------------+--------------------
-  2 | 2020-03-01 13:51:11.009518 | 
-  1 | 2020-03-01 13:50:44.495992 | 
-(2 filas)
-
---get global report about 1 and 2 records
+--get global report about 3 and 7 records
 stat_record=# select * from _stat_record.global_report_record(1,2);
                                                                global_report_record                                                                  
 -------------------------------------------------------------------------------------------------------------------------------------------------------
  Global report from database server, generate by stat_record extension 
- Record id 1, taked: 2020-03-01 13:50:44.495992 :->
-   Version server: PostgreSQL 10.12 (Ubuntu 10.12-1.pgdg18.04+1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 7.4.0-1ubuntu1~18.04.1) 7.4.0, 64-bit
-   Server start: 2020-03-01 13:41:20.916476-03
-   Server reload: 2020-03-01 13:41:20.772422-03
+ Record id 3, taked: 2020-03-07 06:52:03.288628 :->
+   Version server: PostgreSQL 10.12 (Ubuntu 10.12-2.pgdg18.04+1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 7.4.0-1ubuntu1~18.04.1) 7.4.0, 64-bit
+   Server start: 2020-03-04 08:49:58.207547-03
+   Server reload: 2020-03-04 08:49:57.626657-03
+   Wal file: 000000010000000B00000011
+   Wal Location: B/11ED6FA8
    Users:20
-   Databases: 37
+   Databases: 38
    Tablespaces: 2
    Tablespaces Names/size: 
-     pg_default: 7405.00 MB
+     pg_default: 7431.00 MB
      pg_global: 1.00 MB
- Record id 2, taked: 2020-03-01 13:51:11.009518 :->
-   Version server: PostgreSQL 10.12 (Ubuntu 10.12-1.pgdg18.04+1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 7.4.0-1ubuntu1~18.04.1) 7.4.0, 64-bit
-   Server start: 2020-03-01 13:41:20.916476-03
-   Server reload: 2020-03-01 13:41:20.772422-03
+ Record id 7, taked: 2020-03-07 07:12:58.459051 :->
+   Version server: PostgreSQL 10.12 (Ubuntu 10.12-2.pgdg18.04+1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 7.4.0-1ubuntu1~18.04.1) 7.4.0, 64-bit
+   Server start: 2020-03-04 08:49:58.207547-03
+   Server reload: 2020-03-07 07:06:19.320798-03
+   Wal file: 000000010000000B00000016
+   Wal Location: B/16485178
    Users: 20
-   Databases: 37
+   Databases: 38
    Tablespaces: 2
    Tablespaces Names/size: 
-     pg_default: 7406.00 MB
+     pg_default: 7473.00 MB
      pg_global: 1.00 MB
  Configuration Differences:->
  Databases Differences:->
      Databases count: 0 
-     Databases sizes: 0.51 MB
-     Databases chache ratio: 0.06 %
-     Databases connections: 0 
+     Databases sizes: 41.36 MB
+     Databases chache ratio: 0.00 %
+     Databases connections: 2 
      Databases active connections: 0 
+     Databases deadlocks: 0 
+     Databases conflicts: 0 
      Databases tempfiles: 0 
-     Databases tuples deleted: 0 
-     Databases tuples updated: 3781 
-     Databases tuples inserted: 542 
-     Databases tuples fetched: 4463 
-     Databases tuples returned: 107113 
-     Databases rollback: 0 
-     Databases commit: 20 
-     Buffers_alloc: 67 
-     Buffers_backend_fsync: 0 
-     Buffers_backend: 0 
-     Maxwritten_clean: 0 
-     Buffers_clean: 0 
-     Buffers_checkpoint: 0 
-     Checkpoint_sync_time: 0 
-     Checkpoint_write_time: 0 
-     Checkpoints_req: 0 
-     Checkpoints_timed: 0 
-(46 filas)
+     Databases tuples deleted: 32 
+     Databases tuples updated: 14 
+     Databases tuples inserted: 1004597 
+     Databases tuples fetched: 56896 
+     Databases tuples returned: 786847 
+     Databases rollback: 10 
+     Databases commit: 771 
+     BGwriter Buffers_alloc: 5505 
+     BGwriter Buffers_backend_fsync: 0 
+     BGwriter Buffers_backend: 633 
+     BGwriter Maxwritten_clean: 0 
+     BGwriter Buffers_clean: 0 
+     BGwriter Buffers_checkpoint: 986 
+     BGwriter Checkpoint_sync_time: 1371 
+     BGwriter Checkpoint_write_time: 98844 
+     BGwriter Checkpoints_req: 0 
+     BGwriter Checkpoints_timed: 4 
+     Wal Location: 70 MB 
+(53 filas)
+
 
 --get the total(global and databse statistics) from specific record
-stat_record=#select * from _stat_record.detail_record(2,10) ;
+stat_record=#select * from _stat_record.detail_record(7,5) ;
 detail_record                                                                                                                                                                                                                                                                                                                                          
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- id: 2 - take date: 2020-03-01 13:51:11.009518
+ id: 7 - take date: 2020-03-07 07:12:58.459051
    --Cluster level--
-   Version server: PostgreSQL 10.12 (Ubuntu 10.12-1.pgdg18.04+1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 7.4.0-1ubuntu1~18.04.1) 7.4.0, 64-bit
-   Server start: 2020-03-01 13:41:20.916476-03
-   Server reload: 2020-03-01 13:41:20.772422-03
-   Databases count: 37
-   Databases sizes: 7390.74
-   Databases chache ratio: 99.23
-   Databases connections: 4
+   Version server: PostgreSQL 10.12 (Ubuntu 10.12-2.pgdg18.04+1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 7.4.0-1ubuntu1~18.04.1) 7.4.0, 64-bit
+   Server start: 2020-03-04 08:49:58.207547-03
+   Server reload: 2020-03-07 07:06:19.320798-03
+   Databases count: 38
+   Databases sizes: 7457.47
+   Databases chache ratio: 99.31
+   Databases connections: 7
    Databases active connections: 1
+   Databases deadlocks: 0
+   Databases conflicts: 0
    Databases tempfiles: 43
-   Databases tuples deleted: 42851
-   Databases tuples updated: 31239
-   Databases tuples inserted: 31660959
-   Databases tuples fetched: 4128815
-   Databases tuples returned: 537865817
-   Databases rollback: 389
-   Databases commit: 425400
-   Buffers_alloc: 794138
-   Buffers_backend_fsync: 0
-   Buffers_backend: 3716052
-   Maxwritten_clean: 1210
-   Buffers_clean: 225412
-   Buffers_checkpoint: 430767
-   Checkpoint_sync_time: 1038571
-   Checkpoint_write_time: 12924989
-   Checkpoints_req: 89
-   Checkpoints_timed: 3780
+   Databases tuples deleted: 58678
+   Databases tuples updated: 48621
+   Databases tuples inserted: 35339579
+   Databases tuples fetched: 6958996
+   Databases tuples returned: 623421970
+   Databases rollback: 4778
+   Databases commit: 541687
+   BGwriter Buffers_alloc: 880117
+   BGwriter Buffers_backend_fsync: 0
+   BGwriter Buffers_backend: 3775014
+   BGwriter Maxwritten_clean: 1210
+   BGwriter Buffers_clean: 225413
+   BGwriter Buffers_checkpoint: 486566
+   BGwriter Checkpoint_sync_time: 1170930
+   BGwriter Checkpoint_write_time: 18046732
+   BGwriter Checkpoints_req: 97
+   BGwriter Checkpoints_timed: 4287
+   Wal file: 000000010000000B00000016
+   Wal Location: B/16485178
    Users: 20
      postgres
      ...
-   Tablespaces: 2
-     pg_default: 7406.00 MB
+     Tablespaces: 2
+     pg_default: 7473.00 MB
      pg_global: 1.00 MB
-   Databases: 37
-     sr: 25.89 MB
+   Databases: 38
+     postgres: 9.53 MB
      ...
    Configuration: 
      autovacuum_analyze_scale_factor: 0.1 
+     autovacuum_max_workers: 3 
      autovacuum_naptime: 60 s
      autovacuum: on 
      autovacuum_vacuum_scale_factor: 0.2 
@@ -229,230 +262,262 @@ detail_record
      log_statement: ddl 
      maintenance_work_mem: 65536 kB
      max_connections: 100 
+     max_parallel_workers: 8 
+     max_parallel_workers_per_gather: 2 
      max_wal_size: 1024 MB
      shared_buffers: 16384 8kB
      statement_timeout: 0 ms
      wal_level: replica 
      work_mem: 4096 kB
-   10 Querys with more call: 
-     db: sr -- query: update customers set age=age+$1 where age<$2 -- calls: 7
-     db: sr -- query: SELECT pg_catalog.quote_ident(c.relname) FROM pg_catalog.pg_class c WHERE c.relkind IN ($1, $2, $3, $4, $5, $6) AND substring(pg_catalog.quote_ident(c.relname),$7,$8)=$9 AND pg_catalog.pg_table_is_visible(c.oid) AND c.relnamespace <> (SELECT oid FROM pg_catalog.pg_namespace WHERE nspname = $10)                                                                                                                                                                                                                                                                                                                                                                  +
- UNION                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         +
- SELECT pg_catalog.quote_ident(n.nspname) || $11 FROM pg_catalog.pg_namespace n WHERE substring(pg_catalog.quote_ident(n.nspname) || $12,$13,$14)=$15 AND (SELECT pg_catalog.count(*) FROM pg_catalog.pg_namespace WHERE substring(pg_catalog.quote_ident(nspname) || $16,$17,$18) = substring($19,$20,pg_catalog.length(pg_catalog.quote_ident(nspname))+$21)) > $22                                                                                                                                                                                                                                                                                                                          +
- UNION                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         +
- SELECT pg_catalog.quote_ident(n.nspname) || $23 || pg_catalog.quote_ident(c.relname) FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n WHERE c.relnamespace = n.oid AND c.relkind IN ($24, $25, $26, $27, $28, $29) AND substring(pg_catalog.quote_ident(n.nspname) || $30 || pg_catalog.quote_ident(c.relname),$31,$32)=$33 AND substring(pg_catalog.quote_ident(n.nspname) || $34,$35,$36) = substring($37,$38,pg_catalog.length(pg_catalog.quote_ident(n.nspname))+$39) AND (SELECT pg_catalog.count(*) FROM pg_catalog.pg_namespace WHERE substring(pg_catalog.quote_ident(nspname) || $40,$41,$42) = substring($43,$44,pg_catalog.length(pg_catalog.quote_ident(nspname))+$45)) = $46+
- LIMIT $47 -- calls: 7
-     db: sr -- query: select * from public.products where actor = $1 -- calls: 5
-     db: sr -- query: select * from public.products where actor like $1 -- calls: 4
-     db: sr -- query: SELECT pg_catalog.quote_ident(attname)   FROM pg_catalog.pg_attribute a, pg_catalog.pg_class c, pg_catalog.pg_namespace n  WHERE c.oid = a.attrelid    AND n.oid = c.relnamespace    AND a.attnum > $1    AND NOT a.attisdropped    AND substring(pg_catalog.quote_ident(attname),$2,$3)=$4    AND (pg_catalog.quote_ident(relname)=$5         OR $6 || relname || $7 =$8)    AND (pg_catalog.quote_ident(nspname)=$9         OR $10 || nspname || $11 =$12)                                                                                                                                                                                                             +
- LIMIT $13 -- calls: 3
-     db: stat_record -- query: SET application_name = 'PostgreSQL JDBC Driver' -- calls: 3
-     db: stat_record -- query: SELECT e.typdelim FROM pg_catalog.pg_type t, pg_catalog.pg_type e WHERE t.oid = $1 and t.typelem = e.oid -- calls: 3
-     db: sr -- query: SELECT pg_catalog.quote_ident(attname)   FROM pg_catalog.pg_attribute a, pg_catalog.pg_class c  WHERE c.oid = a.attrelid    AND a.attnum > $1    AND NOT a.attisdropped    AND substring(pg_catalog.quote_ident(attname),$2,$3)=$4    AND (pg_catalog.quote_ident(relname)=$5         OR $6 || relname || $7=$8)    AND pg_catalog.pg_table_is_visible(c.oid)                                                                                                                                                                                                                                                                                                            +
- LIMIT $9 -- calls: 3
-     db: stat_record -- query: SELECT n.nspname = ANY(current_schemas($2)), n.nspname, t.typname FROM pg_catalog.pg_type t JOIN pg_catalog.pg_namespace n ON t.typnamespace = n.oid WHERE t.oid = $1 -- calls: 3
-   10 Querys with more total time: 
-     db: sr -- query: CREATE EXTENSION stat_record CASCADE -- total_time: 2725.854297 ms
-     db: sr -- query: select _stat_record.take_record() -- total_time: 1184.850743 ms
-     db: sr -- query: select _stat_record.take_record() -- total_time: 330.896484 ms
-     db: sr -- query: update customers set age=age+$1 where age<$2 -- total_time: 251.025926 ms
-     db: sr -- query: select _stat_record.take_record() -- total_time: 185.016182 ms
-     db: sr -- query: drop extension stat_record -- total_time: 45.338512 ms
-     db: sr -- query: select * from customers where age=$1 -- total_time: 28.807474 ms
-     db: sr -- query: select * from public.products where actor like $1 -- total_time: 28.728929 ms
-     db: sr -- query: select * from public.products where actor = $1 -- total_time: 22.049578 ms
-   10 Querys with more mean time: 
-     db: sr -- query: CREATE EXTENSION stat_record CASCADE -- mean_time: 1362.9271485 ms
-     db: sr -- query: select _stat_record.take_record() -- mean_time: 1184.850743 ms
-     db: sr -- query: select _stat_record.take_record() -- mean_time: 185.016182 ms
-     db: sr -- query: select _stat_record.take_record() -- mean_time: 165.448242 ms
-     db: sr -- query: update customers set age=age+$1 where age<$2 -- mean_time: 35.8608465714286 ms
-     db: sr -- query: select * from customers where age=$1 -- mean_time: 28.807474 ms
-     db: sr -- query: drop extension stat_record -- mean_time: 22.669256 ms
-     db: sr -- query: select * from _stat_record.global_report_record($1,$2) -- mean_time: 13.378969 ms
-     db: sr -- query: select * from public.products where actor like $1 -- mean_time: 7.18223225 ms
-   10 Querys with  max time: 
-     db: sr -- query: CREATE EXTENSION stat_record CASCADE -- max_time: 1373.484445 ms
-     db: sr -- query: select _stat_record.take_record() -- max_time: 1184.850743 ms
-     db: sr -- query: select _stat_record.take_record() -- max_time: 185.016182 ms
-     db: sr -- query: select _stat_record.take_record() -- max_time: 176.612708 ms
-     db: sr -- query: update customers set age=age+$1 where age<$2 -- max_time: 44.467953 ms
-     db: sr -- query: select * from customers where age=$1 -- max_time: 28.807474 ms
-     db: sr -- query: drop extension stat_record -- max_time: 24.294903 ms
-     db: sr -- query: select * from _stat_record.global_report_record($1,$2) -- max_time: 13.378969 ms
-     db: sr -- query: select * from public.products where actor like $1 -- max_time: 7.742774 ms
-   10 Querys with  more row  returned: 
-     db: sr -- query: update customers set age=age+$1 where age<$2 -- rows: 5645
-     db: sr -- query: select * from customers where age=$1 -- rows: 297
-     db: sr -- query: select * from public.products where actor like $1 -- rows: 297
-     db: stat_record -- query: SELECT t.oid,t.*,c.relkind                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      +
- FROM pg_catalog.pg_type t                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     +
- LEFT OUTER JOIN pg_class c ON c.oid=t.typrelid                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                +
- WHERE typnamespace=$1                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         +
- ORDER by t.oid -- rows: 284
-     db: sr -- query: select * from _stat_record.global_report_record($1,$2) -- rows: 48
-     db: stat_record -- query: SELECT a.oid,a.* FROM pg_catalog.pg_roles a                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     +
- ORDER BY a.oid -- rows: 30
-     db: sr -- query: SELECT pg_catalog.quote_ident(c.relname) FROM pg_catalog.pg_class c WHERE c.relkind IN ($1, $2, $3, $4, $5, $6) AND substring(pg_catalog.quote_ident(c.relname),$7,$8)=$9 AND pg_catalog.pg_table_is_visible(c.oid) AND c.relnamespace <> (SELECT oid FROM pg_catalog.pg_namespace WHERE nspname = $10)                                                                                                                                                                                                                                                                                                                                                                  +
- UNION                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         +
- SELECT pg_catalog.quote_ident(n.nspname) || $11 FROM pg_catalog.pg_namespace n WHERE substring(pg_catalog.quote_ident(n.nspname) || $12,$13,$14)=$15 AND (SELECT pg_catalog.count(*) FROM pg_catalog.pg_namespace WHERE substring(pg_catalog.quote_ident(nspname) || $16,$17,$18) = substring($19,$20,pg_catalog.length(pg_catalog.quote_ident(nspname))+$21)) > $22                                                                                                                                                                                                                                                                                                                          +
- UNION                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         +
- SELECT pg_catalog.quote_ident(n.nspname) || $23 || pg_catalog.quote_ident(c.relname) FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n WHERE c.relnamespace = n.oid AND c.relkind IN ($24, $25, $26, $27, $28, $29) AND substring(pg_catalog.quote_ident(n.nspname) || $30 || pg_catalog.quote_ident(c.relname),$31,$32)=$33 AND substring(pg_catalog.quote_ident(n.nspname) || $34,$35,$36) = substring($37,$38,pg_catalog.length(pg_catalog.quote_ident(n.nspname))+$39) AND (SELECT pg_catalog.count(*) FROM pg_catalog.pg_namespace WHERE substring(pg_catalog.quote_ident(nspname) || $40,$41,$42) = substring($43,$44,pg_catalog.length(pg_catalog.quote_ident(nspname))+$45)) = $46+
- LIMIT $47 -- rows: 22
-     db: sr -- query: select * from categories -- rows: 16
-     db: sr -- query: SELECT pg_catalog.quote_ident(attname)   FROM pg_catalog.pg_attribute a, pg_catalog.pg_class c, pg_catalog.pg_namespace n  WHERE c.oid = a.attrelid    AND n.oid = c.relnamespace    AND a.attnum > $1    AND NOT a.attisdropped    AND substring(pg_catalog.quote_ident(attname),$2,$3)=$4    AND (pg_catalog.quote_ident(relname)=$5         OR $6 || relname || $7 =$8)    AND (pg_catalog.quote_ident(nspname)=$9         OR $10 || nspname || $11 =$12)                                                                                                                                                                                                             +
- LIMIT $13 -- rows: 15
-   --Database level--(sr)
+   5 Queries with more call: 
+   5 Queries with more total time: 
+   5 Queries with more mean time: 
+   5 Queriess with  max time: 
+   5 Queries with  more row  returned: 
+   5 Queries with least cache ratio: 
+   --Database level--(lpm)
    Schemas: 
-     public: 17.30 MB
-   Table count: 8
-   10 tables Weigth: 
-     public.customers: 4.42 MB
+     public: 51.32 MB
+   Table count: 10
+   5 tables Weigth: 
+     public.tabla1: 34.57 MB
+     public.customers: 3.81 MB
      public.orderlines: 3.01 MB
      public.cust_hist: 2.55 MB
      public.products: 0.79 MB
-     public.orders: 0.78 MB
-     public.inventory: 0.43 MB
-     public.categories: 0.01 MB
-     public.reorder: 0.00 MB
-   10 tables with more estimated tuples: 
+   5 tables with more estimated tuples: 
      public.cust_hist: 60350 
      public.orderlines: 60350 
      public.customers: 20000 
      public.orders: 12000 
-     public.products: 10000 
      public.inventory: 10000 
-     public.categories: 16 
-     public.reorder: 0 
-   10 most consulted tables: 
-     public.products: 12
-     public.customers: 12
-     public.orders: 4
-     public.orderlines: 2
-     public.cust_hist: 2
-     public.categories: 2
-     public.inventory: 1
-     public.reorder: 0
-   10 tables with more Inserted tuples: 
-     public.cust_hist: 60350 
+   5 most consulted tables: 
+   5 tables with more Inserted tuples: 
+     public.tabla1: 3213000 
      public.orderlines: 60350 
+     public.cust_hist: 60350 
      public.customers: 20000 
      public.orders: 12000 
-     public.products: 10000 
-     public.inventory: 10000 
-     public.categories: 16 
-     public.reorder: 0 
-   10 tables with more Updated tuples: 
-     public.customers: 5645 
-     public.products: 0 
-     public.orders: 0 
-     public.orderlines: 0 
-     public.inventory: 0 
-     public.cust_hist: 0 
-     public.reorder: 0 
-     public.categories: 0 
-   10 tables with more Deleted tuples: 
+   5 tables with more Updated tuples: 
+     public.customers: 11516 
+     public.tab: 0 
      public.reorder: 0 
      public.products: 0 
      public.orders: 0 
-     public.orderlines: 0 
-     public.inventory: 0 
-     public.customers: 0 
-     public.cust_hist: 0 
-     public.categories: 0 
-   10 tables with more Autovacuum: 
+   5 tables with more Deleted tuples: 
+     public.tabla1: 13000 
+     public.tab: 0 
+     public.reorder: 0 
+     public.products: 0 
+ public.orders: 0 
+   5 tables with more Autovacuum: 
+     public.customers: 1 
+     public.tabla1: 1 
      public.reorder: 0 
      public.products: 0 
      public.orders: 0 
-     public.orderlines: 0 
-     public.inventory: 0 
-     public.customers: 0 
-     public.cust_hist: 0 
-     public.categories: 0 
-   10 tables with more Manual Vacuum: 
+   5 tables with more Manual Vacuum: 
+     public.customers: 1 
+     public.tab: 0 
      public.reorder: 0 
      public.products: 0 
      public.orders: 0 
-     public.orderlines: 0 
-     public.inventory: 0 
-     public.customers: 0 
-     public.cust_hist: 0 
-     public.categories: 0 
-   10 tables with more Auto Analyze: 
-     public.cust_hist: 1 
-     public.products: 1 
+   5 tables with more Auto Analyze: 
+     public.tabla1: 6 
+     public.customers: 3 
      public.orders: 1 
      public.orderlines: 1 
-     public.inventory: 1 
-     public.customers: 1 
-     public.categories: 0 
-     public.reorder: 0 
-   10 tables with more Manual Analyze: 
+     public.products: 1 
+   5 tables with more Manual Analyze: 
+     public.tabla1: 0 
+     public.tab: 0 
      public.reorder: 0 
      public.products: 0 
      public.orders: 0 
-     public.orderlines: 0 
-     public.inventory: 0 
-     public.customers: 0 
-     public.cust_hist: 0 
-     public.categories: 0 
-   10 indexs Weigth: 
+   5 indexs Weigth: 
      public.orderlines.ix_orderlines_orderid: 1.30 MB
      public.cust_hist.ix_cust_hist_customerid: 1.30 MB
      public.customers.ix_cust_username: 0.61 MB
      public.customers.customers_pkey: 0.45 MB
      public.orders.ix_order_custid: 0.27 MB
-     public.orders.orders_pkey: 0.27 MB
-     public.inventory.inventory_pkey: 0.23 MB
-     public.products.ix_prod_category: 0.23 MB
-     public.products.products_pkey: 0.23 MB
-   10 indexs used: 
-     public.categories.categories_pkey: 0 
-     public.inventory.inventory_pkey: 0 
+   5 indexs used: 
+     public.customers.customers_pkey: 6 
+     public.cust_hist.ix_cust_hist_customerid: 2 
      public.products.ix_prod_special: 0 
      public.products.ix_prod_category: 0 
      public.products.products_pkey: 0 
-     public.cust_hist.ix_cust_hist_customerid: 0 
-     public.customers.ix_cust_username: 0 
-     public.customers.customers_pkey: 0 
-     public.orders.ix_order_custid: 0 
-   10 table bloat: 
+   5 table bloat: 
      public.cust_hist: 0.24 MB
      public.orderlines: 0.23 MB
      public.orders: 0.09 MB
      public.inventory: 0.05 MB
      public.products: 0.02 MB
-     public.customers: 0.00 MB
-   10 index bloat: 
+   5 index bloat: 
      public.cust_hist->ix_cust_hist_customerid: 0.00 MB
      public.customers->customers_pkey: 0.00 MB
      public.customers->ix_cust_username: 0.00 MB
      public.inventory->inventory_pkey: 0.00 MB
      public.orderlines->ix_orderlines_orderid: 0.00 MB
-     public.orders->ix_order_custid: 0.00 MB
-     public.orders->orders_pkey: 0.00 MB
-     public.products->ix_prod_category: 0.00 MB
-     public.products->ix_prod_special: 0.00 MB
-(289 filas)
+(205 filas)
 
---get the total(global and databse statistics) reports about 1 and 2 records and some different
-stat_record=#select * from _stat_record.total_report_record(1,2);
+
+--get information about global server values and diff
+stat_record=#select * from _stat_record.v_global_stat_value_diff;
+ id_record |         date_take          |            var_name            |    val     |  diff   
+-----------+----------------------------+--------------------------------+------------+---------
+         3 | 2020-03-07 06:52:03.288628 | BGwriter Buffers_alloc         | 874612     | 
+         4 | 2020-03-07 07:02:03.645995 | BGwriter Buffers_alloc         | 875028     | 416
+         5 | 2020-03-07 07:06:05.774309 | BGwriter Buffers_alloc         | 875240     | 212
+         6 | 2020-03-07 07:12:12.856504 | BGwriter Buffers_alloc         | 875458     | 218
+         7 | 2020-03-07 07:12:58.459051 | BGwriter Buffers_alloc         | 880117     | 4659
+         3 | 2020-03-07 06:52:03.288628 | BGwriter Buffers_backend       | 3774381    | 
+         4 | 2020-03-07 07:02:03.645995 | BGwriter Buffers_backend       | 3774589    | 208
+         5 | 2020-03-07 07:06:05.774309 | BGwriter Buffers_backend       | 3774802    | 213
+         6 | 2020-03-07 07:12:12.856504 | BGwriter Buffers_backend       | 3775014    | 212
+         7 | 2020-03-07 07:12:58.459051 | BGwriter Buffers_backend       | 3775014    | 0
+         3 | 2020-03-07 06:52:03.288628 | BGwriter Buffers_backend_fsync | 0          | 
+         4 | 2020-03-07 07:02:03.645995 | BGwriter Buffers_backend_fsync | 0          | 0
+         5 | 2020-03-07 07:06:05.774309 | BGwriter Buffers_backend_fsync | 0          | 0
+         6 | 2020-03-07 07:12:12.856504 | BGwriter Buffers_backend_fsync | 0          | 0
+         7 | 2020-03-07 07:12:58.459051 | BGwriter Buffers_backend_fsync | 0          | 0
+         3 | 2020-03-07 06:52:03.288628 | BGwriter Buffers_checkpoint    | 485580     | 
+         4 | 2020-03-07 07:02:03.645995 | BGwriter Buffers_checkpoint    | 486094     | 514
+         5 | 2020-03-07 07:06:05.774309 | BGwriter Buffers_checkpoint    | 486191     | 97
+         6 | 2020-03-07 07:12:12.856504 | BGwriter Buffers_checkpoint    | 486566     | 375
+         7 | 2020-03-07 07:12:58.459051 | BGwriter Buffers_checkpoint    | 486566     | 0
+         3 | 2020-03-07 06:52:03.288628 | BGwriter Buffers_clean         | 225413     | 
+         4 | 2020-03-07 07:02:03.645995 | BGwriter Buffers_clean         | 225413     | 0
+         5 | 2020-03-07 07:06:05.774309 | BGwriter Buffers_clean         | 225413     | 0
+         6 | 2020-03-07 07:12:12.856504 | BGwriter Buffers_clean         | 225413     | 0
+         7 | 2020-03-07 07:12:58.459051 | BGwriter Buffers_clean         | 225413     | 0
+         3 | 2020-03-07 06:52:03.288628 | BGwriter Checkpoints_req       | 97         | 
+         4 | 2020-03-07 07:02:03.645995 | BGwriter Checkpoints_req       | 97         | 0
+         5 | 2020-03-07 07:06:05.774309 | BGwriter Checkpoints_req       | 97         | 0
+         6 | 2020-03-07 07:12:12.856504 | BGwriter Checkpoints_req       | 97         | 0
+         7 | 2020-03-07 07:12:58.459051 | BGwriter Checkpoints_req       | 97         | 0
+         3 | 2020-03-07 06:52:03.288628 | BGwriter Checkpoints_timed     | 4283       | 
+         4 | 2020-03-07 07:02:03.645995 | BGwriter Checkpoints_timed     | 4285       | 2
+         5 | 2020-03-07 07:06:05.774309 | BGwriter Checkpoints_timed     | 4286       | 1
+         6 | 2020-03-07 07:12:12.856504 | BGwriter Checkpoints_timed     | 4287       | 1
+         7 | 2020-03-07 07:12:58.459051 | BGwriter Checkpoints_timed     | 4287       | 0
+         3 | 2020-03-07 06:52:03.288628 | BGwriter Checkpoint_sync_time  | 1169559    | 
+         4 | 2020-03-07 07:02:03.645995 | BGwriter Checkpoint_sync_time  | 1169668    | 109
+         5 | 2020-03-07 07:06:05.774309 | BGwriter Checkpoint_sync_time  | 1169668    | 0
+         6 | 2020-03-07 07:12:12.856504 | BGwriter Checkpoint_sync_time  | 1170930    | 1262
+         7 | 2020-03-07 07:12:58.459051 | BGwriter Checkpoint_sync_time  | 1170930    | 0
+         3 | 2020-03-07 06:52:03.288628 | BGwriter Checkpoint_write_time | 17947888   | 
+         4 | 2020-03-07 07:02:03.645995 | BGwriter Checkpoint_write_time | 17999167   | 51279
+         5 | 2020-03-07 07:06:05.774309 | BGwriter Checkpoint_write_time | 17999167   | 0
+         6 | 2020-03-07 07:12:12.856504 | BGwriter Checkpoint_write_time | 18046732   | 47565
+         7 | 2020-03-07 07:12:58.459051 | BGwriter Checkpoint_write_time | 18046732   | 0
+         3 | 2020-03-07 06:52:03.288628 | BGwriter Maxwritten_clean      | 1210       | 
+         4 | 2020-03-07 07:02:03.645995 | BGwriter Maxwritten_clean      | 1210       | 0
+         5 | 2020-03-07 07:06:05.774309 | BGwriter Maxwritten_clean      | 1210       | 0
+         6 | 2020-03-07 07:12:12.856504 | BGwriter Maxwritten_clean      | 1210       | 0
+         7 | 2020-03-07 07:12:58.459051 | BGwriter Maxwritten_clean      | 1210       | 0
+          3 | 2020-03-07 06:52:03.288628 | Databases active connections   | 1          | 
+         4 | 2020-03-07 07:02:03.645995 | Databases active connections   | 1          | 0
+         5 | 2020-03-07 07:06:05.774309 | Databases active connections   | 1          | 0
+         6 | 2020-03-07 07:12:12.856504 | Databases active connections   | 1          | 0
+         7 | 2020-03-07 07:12:58.459051 | Databases active connections   | 1          | 0
+         3 | 2020-03-07 06:52:03.288628 | Databases chache ratio         | 99.31      | 
+         4 | 2020-03-07 07:02:03.645995 | Databases chache ratio         | 99.31      | 0.00
+         5 | 2020-03-07 07:06:05.774309 | Databases chache ratio         | 99.31      | 0.00
+         6 | 2020-03-07 07:12:12.856504 | Databases chache ratio         | 99.31      | 0.00
+         7 | 2020-03-07 07:12:58.459051 | Databases chache ratio         | 99.31      | 0.00
+         3 | 2020-03-07 06:52:03.288628 | Databases commit               | 540916     | 
+         4 | 2020-03-07 07:02:03.645995 | Databases commit               | 541267     | 351
+         5 | 2020-03-07 07:06:05.774309 | Databases commit               | 541405     | 138
+         6 | 2020-03-07 07:12:12.856504 | Databases commit               | 541653     | 248
+         7 | 2020-03-07 07:12:58.459051 | Databases commit               | 541687     | 34
+         3 | 2020-03-07 06:52:03.288628 | Databases conflicts            | 0          | 
+         4 | 2020-03-07 07:02:03.645995 | Databases conflicts            | 0          | 0
+         5 | 2020-03-07 07:06:05.774309 | Databases conflicts            | 0          | 0
+         6 | 2020-03-07 07:12:12.856504 | Databases conflicts            | 0          | 0
+         7 | 2020-03-07 07:12:58.459051 | Databases conflicts            | 0          | 0
+         3 | 2020-03-07 06:52:03.288628 | Databases connections          | 5          | 
+         4 | 2020-03-07 07:02:03.645995 | Databases connections          | 8          | 3
+         5 | 2020-03-07 07:06:05.774309 | Databases connections          | 7          | -1
+         6 | 2020-03-07 07:12:12.856504 | Databases connections          | 7          | 0
+         7 | 2020-03-07 07:12:58.459051 | Databases connections          | 7          | 0
+         3 | 2020-03-07 06:52:03.288628 | Databases count                | 38         | 
+         4 | 2020-03-07 07:02:03.645995 | Databases count                | 38         | 0
+         5 | 2020-03-07 07:06:05.774309 | Databases count                | 38         | 0
+         6 | 2020-03-07 07:12:12.856504 | Databases count                | 38         | 0
+         7 | 2020-03-07 07:12:58.459051 | Databases count                | 38         | 0
+         3 | 2020-03-07 06:52:03.288628 | Databases deadlocks            | 0          | 
+         4 | 2020-03-07 07:02:03.645995 | Databases deadlocks            | 0          | 0
+         5 | 2020-03-07 07:06:05.774309 | Databases deadlocks            | 0          | 0
+         6 | 2020-03-07 07:12:12.856504 | Databases deadlocks            | 0          | 0
+         7 | 2020-03-07 07:12:58.459051 | Databases deadlocks            | 0          | 0
+         3 | 2020-03-07 06:52:03.288628 | Databases rollback             | 4768       | 
+         4 | 2020-03-07 07:02:03.645995 | Databases rollback             | 4773       | 5
+         5 | 2020-03-07 07:06:05.774309 | Databases rollback             | 4773       | 0
+         6 | 2020-03-07 07:12:12.856504 | Databases rollback             | 4778       | 5
+         7 | 2020-03-07 07:12:58.459051 | Databases rollback             | 4778       | 0
+         3 | 2020-03-07 06:52:03.288628 | Databases sizes                | 7416.11    | 
+         4 | 2020-03-07 07:02:03.645995 | Databases sizes                | 7417.73    | 1.62
+         5 | 2020-03-07 07:06:05.774309 | Databases sizes                | 7419.40    | 1.67
+         6 | 2020-03-07 07:12:12.856504 | Databases sizes                | 7421.07    | 1.67
+         7 | 2020-03-07 07:12:58.459051 | Databases sizes                | 7457.47    | 36.40
+         3 | 2020-03-07 06:52:03.288628 | Databases tempfiles            | 43         | 
+         4 | 2020-03-07 07:02:03.645995 | Databases tempfiles            | 43         | 0
+         5 | 2020-03-07 07:06:05.774309 | Databases tempfiles            | 43         | 0
+         6 | 2020-03-07 07:12:12.856504 | Databases tempfiles            | 43         | 0
+         7 | 2020-03-07 07:12:58.459051 | Databases tempfiles            | 43         | 0
+         3 | 2020-03-07 06:52:03.288628 | Databases tuples deleted       | 58646      | 
+         4 | 2020-03-07 07:02:03.645995 | Databases tuples deleted       | 58658      | 12
+         5 | 2020-03-07 07:06:05.774309 | Databases tuples deleted       | 58658      | 0
+         6 | 2020-03-07 07:12:12.856504 | Databases tuples deleted       | 58678      | 20
+         7 | 2020-03-07 07:12:58.459051 | Databases tuples deleted       | 58678      | 0
+         3 | 2020-03-07 06:52:03.288628 | Databases tuples fetched       | 6902100    | 
+         4 | 2020-03-07 07:02:03.645995 | Databases tuples fetched       | 6951068    | 48968
+         5 | 2020-03-07 07:06:05.774309 | Databases tuples fetched       | 6951808    | 740
+         6 | 2020-03-07 07:12:12.856504 | Databases tuples fetched       | 6953170    | 1362
+         7 | 2020-03-07 07:12:58.459051 | Databases tuples fetched       | 6958996    | 5826
+         3 | 2020-03-07 06:52:03.288628 | Databases tuples inserted      | 34334982   | 
+         4 | 2020-03-07 07:02:03.645995 | Databases tuples inserted      | 34334994   | 12
+         5 | 2020-03-07 07:06:05.774309 | Databases tuples inserted      | 34334994   | 0
+         6 | 2020-03-07 07:12:12.856504 | Databases tuples inserted      | 34335014   | 20
+         7 | 2020-03-07 07:12:58.459051 | Databases tuples inserted      | 35339579   | 1004565
+         3 | 2020-03-07 06:52:03.288628 | Databases tuples returned      | 622635123  | 
+         4 | 2020-03-07 07:02:03.645995 | Databases tuples returned      | 623036689  | 401566
+         5 | 2020-03-07 07:06:05.774309 | Databases tuples returned      | 623172504  | 135815
+         6 | 2020-03-07 07:12:12.856504 | Databases tuples returned      | 623382317  | 209813
+         7 | 2020-03-07 07:12:58.459051 | Databases tuples returned      | 623421970  | 39653
+         3 | 2020-03-07 06:52:03.288628 | Databases tuples updated       | 48607      | 
+         4 | 2020-03-07 07:02:03.645995 | Databases tuples updated       | 48613      | 6
+         5 | 2020-03-07 07:06:05.774309 | Databases tuples updated       | 48613      | 0
+         6 | 2020-03-07 07:12:12.856504 | Databases tuples updated       | 48619      | 6
+         7 | 2020-03-07 07:12:58.459051 | Databases tuples updated       | 48621      | 2
+         3 | 2020-03-07 06:52:03.288628 | Wal Location                   | B/11ED6FA8 | 
+         4 | 2020-03-07 07:02:03.645995 | Wal Location                   | B/120EC350 | 2133 kB
+         5 | 2020-03-07 07:06:05.774309 | Wal Location                   | B/122F6220 | 2088 kB
+         6 | 2020-03-07 07:12:12.856504 | Wal Location                   | B/1251C000 | 2199 kB
+         7 | 2020-03-07 07:12:58.459051 | Wal Location                   | B/16485178 | 63 MB
+(130 filas)
+
+
+
+ 
+--get the total(global and databse statistics) reports about 3 and 7 records and some different
+stat_record=#select * from _stat_record.total_report_record(3,7);
 ...
 
---get the total reports about 1 and 2 records and some different and export to some file csv, limit 3 for objects statistics
-stat_record=#select _stat_record.export_total_report_record(1,2,3,'/tmp/reporte.csv')
+--get the total reports about 3 and 7 records and some different and export to some file csv, limit 3 for objects statistics
+stat_record=#select _stat_record.export_total_report_record(3,7,3,'/tmp/reporte.csv')
 ...
 
 --get the total reports about last tow records taked and some different
-stat_record=#select * from select * from _stat_record.total_report_for_2last_record()
+stat_record=#select * from _stat_record.total_report_for_2last_record()
 ...
 
 --get the total reports about fisrt and the last records taked in the month 
-stat_record=#select * from _stat_record.total_report_for_amonth_record('2019-03-01') --get report in march 2019
+stat_record=#select * from _stat_record.total_report_for_amonth_record('2020-03-01') --get report in march 2020
 ...
 
 --delete some record by id
-stat_record=# select _stat_record.delete_record(1);
+stat_record=# select _stat_record.delete_record(3);
 NOTICE:  record deleted
  delete_record 
 ---------------

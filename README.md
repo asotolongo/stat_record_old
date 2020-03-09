@@ -362,7 +362,7 @@ detail_record
 (205 filas)
 
 
---get information about global server values and diff
+--get information about global server values and diff of snapshots
 stat_record=#select * from _stat_record.v_global_stat_value_diff;
  id_record |         date_take          |            var_name            |    val     |  diff   
 -----------+----------------------------+--------------------------------+------------+---------
